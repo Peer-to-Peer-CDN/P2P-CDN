@@ -11,5 +11,9 @@
     "url": "https://gitlab.ost.ch/jason.benz/sa-code-locher-benz.git"
   },
   "author": "Adrian Locher, Jason Benz",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "bittorrent-protocol": "^4.0.1",
+    "simple-peer": "^9.11.1"
+  }
 }
