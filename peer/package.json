@@ -1,0 +1,15 @@
+{
+  "name": "peer",
+  "version": "1.0.0",
+  "description": "peer implementation",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://gitlab.ost.ch/jason.benz/sa-code-locher-benz.git"
+  },
+  "author": "Adrian Locher, Jason Benz",
+  "license": "ISC"
+}
