@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "es6",
+    "sourceMap": true,
+    "noImplicitAny": true,
+    "allowSyntheticDefaultImports": true,
+    "strictNullChecks": true,
+    "watch": true,
+    "outDir": "out"
+  },
+  "exclude": [
+    "node_modules"
+  ]
+}

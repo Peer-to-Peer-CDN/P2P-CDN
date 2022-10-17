@@ -4,7 +4,7 @@
   "description": "peer implementation",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha test/**/*.mjs"
   },
   "repository": {
     "type": "git",
@@ -14,6 +14,13 @@
   "license": "ISC",
   "dependencies": {
     "bittorrent-protocol": "^4.0.1",
+    "browser-resolve": "^2.0.0",
     "simple-peer": "^9.11.1"
+  },
+  "devDependencies": {
+    "@types/bittorrent-protocol": "^3.1.2",
+    "@types/simple-peer": "^9.11.5",
+    "esmify": "^2.1.1",
+    "mocha": "^10.0.0"
   }
 }
