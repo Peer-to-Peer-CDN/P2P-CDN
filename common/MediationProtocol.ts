@@ -33,8 +33,8 @@ export class MediationProtocol {
         this.stream.emit('peers', fullHash, peerList);
     }
 
-    public signal(senderPeerId: string, receiverPeerId: string, signalData: string) {
-        this.stream.emit('signal', senderPeerId, receiverPeerId, signalData);
+    public signal(full_hash:string, senderPeerId: string, receiverPeerId: string, signalData: string) {
+        this.stream.emit('signal',full_hash, senderPeerId, receiverPeerId, signalData);
     }
 
     public announce(seederPeerId: string, fullHash: string) {

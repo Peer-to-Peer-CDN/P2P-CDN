@@ -1,5 +1,3 @@
-import {PeerIdentifier} from "./PeerIdentifier";
-
 export class InfoDictionary {
     full_hash;
     file_name;

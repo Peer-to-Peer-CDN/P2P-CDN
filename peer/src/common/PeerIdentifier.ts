@@ -1,19 +1,13 @@
-
 export {PeerIdentifier};
 
 class PeerIdentifier {
-    id : number;
+    readonly id : string;
 
-    constructor(id : number = 0x0) {
+    constructor(id : string) {
         this.id = id;
     }
 
     toString() : string {
-        return this.id.toString(16);
+        return this.id;
     }
-
-    setString(hexString: string) : void {
-        this.id = parseInt(hexString, 16);
-    }
-
 }

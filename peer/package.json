@@ -13,14 +13,20 @@
   "author": "Adrian Locher, Jason Benz",
   "license": "ISC",
   "dependencies": {
+    "bitfield": "^4.1.0",
     "bittorrent-protocol": "^4.0.1",
     "browser-resolve": "^2.0.0",
-    "simple-peer": "^9.11.1"
+    "simple-peer": "^9.11.1",
+    "socket.io-client": "^4.5.3"
   },
   "devDependencies": {
     "@types/bittorrent-protocol": "^3.1.2",
+    "@types/chai": "^4.3.3",
+    "@types/mocha": "^10.0.0",
     "@types/simple-peer": "^9.11.5",
+    "chai": "^4.3.6",
     "esmify": "^2.1.1",
-    "mocha": "^10.0.0"
+    "mocha": "^10.1.0",
+    "ts-node": "^10.9.1"
   }
 }
