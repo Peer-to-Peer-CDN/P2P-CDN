@@ -1,10 +1,12 @@
+import {IClientServerTransport} from "./IClientServerTransport";
+
 export type MediationEventCallback = (...args: any[]) => void;
 
 export class MediationProtocol {
-    private stream: any;
+    private stream: IClientServerTransport;
     private listeners: Map<string, MediationEventCallback[]>;
 
-    constructor(stream: any) {
+    constructor(stream: IClientServerTransport) {
         this.stream = stream;
         this.listeners = new Map<string, MediationEventCallback[]>();
 
