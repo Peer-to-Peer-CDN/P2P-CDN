@@ -1,13 +1,20 @@
 import { InfoDictionary } from "../common/InfoDictionary";
+import { MediationClient } from "../communication_layer/mediation/MediationClient";
+import { CompleteEvent } from "../communication_layer/swarm/ITorrentData";
+import { SwarmManager } from "../communication_layer/swarm/SwarmManager";
 import { TorrentManager } from "../communication_layer/TorrentManager";
+import { io } from "socket.io-client";
 
 export class FileIncluder {
     torrentManager: TorrentManager;
-    config: InfoDictionary[];
+    torrents: InfoDictionary[];
+    mediationClient : MediationClient;
+    peerId: string;
 
-    constructor(config: InfoDictionary[]) {
+    constructor(torrents: InfoDictionary[], mediatorAddress: string, mediatorPort: number) {
         this.torrentManager = new TorrentManager();
-        this.config = config;
+        this.torrents = torrents;
+        this.mediationClient = new MediationClient(this.peerId, () => io(`ws://${mediatorAddress}:${mediatorPort}`)); 
     }
 
     includeDownload(cssString: string, fileName:string) {
@@ -29,7 +36,6 @@ export class FileIncluder {
         link.style.textDecoration = "inherit";
         link.style.display = "inherit";
 
-        //todo: fetch file intead of using class field
         this.fetchFile(fileName, (file) => {
             link.href = URL.createObjectURL(file);
             link.download = file.name;
@@ -40,11 +46,11 @@ export class FileIncluder {
     }
 
     private fetchFile(fileName: string, callback: (file: File) => void) {
-        let dict = this.config.find(dict => {dict.file_name === fileName});
+        let dict = this.torrents.find(dict => {dict.file_name === fileName});
         if(!dict) {
             console.error("Configuration does not contain a file called", fileName);
             return;
         }
-        this.torrentManager.registerFileEvent(dict.full_hash, callback);
+        this.torrentManager.addTorrent(dict, (complete: CompleteEvent) => new SwarmManager(dict!, this.mediationClient, complete), callback);
     }
 }

@@ -6,8 +6,9 @@
     "noImplicitAny": true,
     "allowSyntheticDefaultImports": true,
     "strictNullChecks": true,
-    "watch": true,
-    "outDir": "out"
+    "watch": false,
+    "outDir": "out",
+    "esModuleInterop": true
   },
   "exclude": [
     "node_modules",

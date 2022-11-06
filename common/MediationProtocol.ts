@@ -4,7 +4,7 @@ export type MediationEventCallback = (...args: any[]) => void;
 
 export class MediationProtocol {
     private stream: IClientServerTransport;
-    private listeners: Map<string, MediationEventCallback[]>;
+    protected listeners: Map<string, MediationEventCallback[]>;
 
     constructor(stream: IClientServerTransport) {
         this.stream = stream;

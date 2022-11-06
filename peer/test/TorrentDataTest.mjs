@@ -1,6 +1,6 @@
 import { assert } from "chai";
-import {TorrentData} from "../out/communication_layer/TorrentData.js";
-import {InfoDictionary} from "../out/common/InfoDictionary.js";
+import {TorrentData} from "../out/peer/src/communication_layer/TorrentData.js";
+import {InfoDictionary} from "../out/peer/src/common/InfoDictionary.js";
 
 describe("Testing torrent data module", () => {
     let mut; //module under test;
@@ -14,7 +14,7 @@ describe("Testing torrent data module", () => {
             100, 
             5, 
             450);
-        mut = new TorrentData(id, cb);
+        mut = new TorrentData(id, cb, () => {});
     });
 
     it("nextNeededPieceIndex gives all pieces", () => {

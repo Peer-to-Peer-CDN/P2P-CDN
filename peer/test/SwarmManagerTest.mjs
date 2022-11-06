@@ -1,19 +1,20 @@
-import {SwarmManager} from "../out/communication_layer/SwarmManager.js"
+import {SwarmManager} from "../out/peer/src/communication_layer/SwarmManager.js"
 import { assert } from "chai";
-import { InfoDictionary } from "../out/common/InfoDictionary.js";
+import { InfoDictionary } from "../out/peer/src/common/InfoDictionary.js";
 
 
 
 describe("Testing SwarmManager module", () => {
     class MockMediationClient {
         called_register = false;
-        register(full_hash, event_handler) {
+        registerForPeers(full_hash, event_handler) {
             this.called_register = true;
             event_handler(this.peerWireFacotry);
         }
         peerWireFacotry (x,y) {
             return new MockPeerWire({}, x, "" , y);
         }
+        announce(full_hash) {}
     }
     class MockPeerWire {
         constructor(_o1, torrend_data, _o2 ,_o3) {
