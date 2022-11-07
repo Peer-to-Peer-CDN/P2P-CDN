@@ -7,6 +7,8 @@ export class MediationProtocol {
     protected listeners: Map<string, MediationEventCallback[]>;
 
     constructor(stream: IClientServerTransport) {
+        console.log("ctor")
+        console.error("ctor fail");
         this.stream = stream;
         this.listeners = new Map<string, MediationEventCallback[]>();
 
@@ -17,6 +19,10 @@ export class MediationProtocol {
         stream.on('finish', (...args: any[]) => this.listeners.get('finish')?.forEach((callback) => callback(...args)));
     }
 
+    public print() {
+        console.log("Hello World");
+    }
+
     on(event: string, callback: MediationEventCallback) {
         if (!this.listeners.get(event)) {
             this.listeners.set(event, []);
@@ -25,8 +31,9 @@ export class MediationProtocol {
         this.listeners.get(event)?.push(callback);
     }
 
-    public get_peers(fullHash: string) {
-        this.stream.emit('get_peers', fullHash);
+    public get_peers(fullHash: string, senderPeerId: string) {
+        console.log("gp" + senderPeerId);
+        this.stream.emit('get_peers', fullHash, senderPeerId);
     }
 
     public peers(fullHash: string, peerList: string[]) {
@@ -38,6 +45,7 @@ export class MediationProtocol {
     }
 
     public announce(seederPeerId: string, fullHash: string) {
+        console.log("ann");
         this.stream.emit('announce', seederPeerId, fullHash);
     }
 
