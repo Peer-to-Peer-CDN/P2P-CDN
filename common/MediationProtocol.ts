@@ -7,20 +7,16 @@ export class MediationProtocol {
     protected listeners: Map<string, MediationEventCallback[]>;
 
     constructor(stream: IClientServerTransport) {
-        console.log("ctor")
-        console.error("ctor fail");
         this.stream = stream;
         this.listeners = new Map<string, MediationEventCallback[]>();
 
+        stream.on('handshake', (...args: any[]) => this.listeners.get('handshake')?.forEach((callback) => callback(...args)));
+        stream.on('established', (...args: any[]) => this.listeners.get('established')?.forEach((callback) => callback(...args)));
         stream.on('get_peers', (...args: any[]) => this.listeners.get('get_peers')?.forEach((callback) => callback(...args)));
         stream.on('peers', (...args: any[]) => this.listeners.get('peers')?.forEach((callback) => callback(...args)));
         stream.on('signal', (...args: any[]) => this.listeners.get('signal')?.forEach((callback) => callback(...args)));
         stream.on('announce', (...args: any[]) => this.listeners.get('announce')?.forEach((callback) => callback(...args)));
         stream.on('finish', (...args: any[]) => this.listeners.get('finish')?.forEach((callback) => callback(...args)));
-    }
-
-    public print() {
-        console.log("Hello World");
     }
 
     on(event: string, callback: MediationEventCallback) {
@@ -31,25 +27,31 @@ export class MediationProtocol {
         this.listeners.get(event)?.push(callback);
     }
 
-    public get_peers(fullHash: string, senderPeerId: string) {
-        console.log("gp" + senderPeerId);
-        this.stream.emit('get_peers', fullHash, senderPeerId);
+    public handshake(peerId: string) {
+        this.stream.emit('handshake', peerId);
+    }
+
+    public established() {
+        this.stream.emit('established');
+    }
+
+    public get_peers(fullHash: string) {
+        this.stream.emit('get_peers', fullHash);
     }
 
     public peers(fullHash: string, peerList: string[]) {
         this.stream.emit('peers', fullHash, peerList);
     }
 
-    public signal(full_hash:string, senderPeerId: string, receiverPeerId: string, signalData: string) {
-        this.stream.emit('signal',full_hash, senderPeerId, receiverPeerId, signalData);
+    public signal(full_hash:string, receiverPeerId: string, signalData: string) {
+        this.stream.emit('signal',full_hash, receiverPeerId, signalData);
     }
 
-    public announce(seederPeerId: string, fullHash: string) {
-        console.log("ann");
-        this.stream.emit('announce', seederPeerId, fullHash);
+    public announce(fullHash: string) {
+        this.stream.emit('announce', fullHash);
     }
 
-    public finish(seederPeerId: string, fullHash: string) {
-        this.stream.emit('finish', seederPeerId, fullHash);
+    public finish(fullHash: string) {
+        this.stream.emit('finish', fullHash);
     }
 }
