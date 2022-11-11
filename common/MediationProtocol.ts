@@ -2,6 +2,11 @@ import {IClientServerTransport} from "./IClientServerTransport";
 
 export type MediationEventCallback = (...args: any[]) => void;
 
+export enum ConnectionType {
+    MEDIATION,
+    REPLICATION
+}
+
 export class MediationProtocol {
     private stream: IClientServerTransport;
     protected listeners: Map<string, MediationEventCallback[]>;
@@ -27,8 +32,8 @@ export class MediationProtocol {
         this.listeners.get(event)?.push(callback);
     }
 
-    public handshake(peerId: string) {
-        this.stream.emit('handshake', peerId);
+    public handshake(peerId: string, connectionType: ConnectionType) {
+        this.stream.emit('handshake', peerId, connectionType);
     }
 
     public established() {
