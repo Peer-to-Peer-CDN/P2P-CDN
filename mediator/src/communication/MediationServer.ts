@@ -1,86 +1,97 @@
 import {Server} from "socket.io";
-import {MediationProtocol} from "../../../common/MediationProtocol";
+import {ConnectionType, MediationProtocol} from "../../../common/MediationProtocol";
 import {PeerConnector} from "./PeerConnector";
+import {IMediationSemantic} from "./IMediationSemantic";
 
 export class MediationServer {
     private server: Server;
     private fullHashesWithPeerIds: Map<string, string[]> = new Map(); // fullHash, peerIds
-    private peers: Map<string, MediationProtocol> = new Map();
-    //private peerConnectors: PeerConnector[] = [];
+    private peerConnectorsWithId: Map<string, IMediationSemantic> = new Map(); // peerId, PeerConnector
 
     constructor(server: Server) {
         this.server = server;
-
-        // TODO: Remove. For test / debug purposes only.
-        this.fullHashesWithPeerIds.set("test m1", ["m1.1", "m1.2", "m1.3"]);
-        this.fullHashesWithPeerIds.set("test m2", ["m2.1", "m2.2", "m2.3"]);
     }
 
     public run() {
         this.server.on('connection', (socket) => {
-            //TODO: Set peerId of sender
-            const peerId = this.peers.size.toString();
-            console.log("New peerId: " + peerId);
-
             const mediation = new MediationProtocol(socket);
-            this.peers.set(peerId, mediation);
 
-            //const peerConnector = new PeerConnector(peerId, mediation);
-            //this.peerConnectors.push(peerConnector);
+            mediation.on('handshake', (peerId, connectionType) => {
+                let semantic: IMediationSemantic;
 
-            mediation.on('get_peers', (...args) => this.onGetPeers.apply(this, args));//args.forEach(a=>console.log(a)));// this.onGetPeers.apply(this, args));
-            mediation.on('peers', (...args) => this.onPeers.apply(this, args));
-            mediation.on('signal', (...args) => this.onSignal.apply(this, args));
-            mediation.on('announce', (...args) => this.onAnnounce.apply(this, args));
-            mediation.on('finish', (...args) => this.onFinish.apply(this, args));
+                if (connectionType == ConnectionType.MEDIATION) {
+                    semantic = new PeerConnector(
+                        peerId,
+                        mediation,
+                        (...args: any[]) => this.getConnectionByPeerId.apply(this, args),
+                        (...args: any[]) => this.getPeerIdsByFullHash.apply(this, args),
+                        (...args: any[]) => this.updatePeerIds.apply(this, args));
+                    this.peerConnectorsWithId.set(peerId, semantic);
+                } else if (connectionType == ConnectionType.REPLICATION) {
+                    // TODO: MediationReplication
+                } else {
+                    return;
+                }
+
+                mediation.established();
+
+                mediation.on('get_peers', (...args) => semantic.onGetPeers.apply(semantic, args));
+                mediation.on('peers', (...args) => semantic.onPeers.apply(semantic, args));
+                mediation.on('signal', (...args) => semantic.onSignal.apply(semantic, args));
+                mediation.on('announce', (...args) => semantic.onAnnounce.apply(semantic, args));
+                mediation.on('finish', (...args) => semantic.onFinish.apply(semantic, args));
+
+                socket.on('disconnect', () => {
+                    // TODO: Delete all peer ids from fullHashesWithPeerIds
+                    this.peerConnectorsWithId.delete(peerId);
+                });
+            });
         });
     }
 
-    private onGetPeers(fullHash: string, senderPeerId: string) {
+    private getPeerIdsByFullHash(fullHash: string): string[] {
         const peerIds = this.fullHashesWithPeerIds.get(fullHash);
+
         if (peerIds != null) {
-            this.peers.get(senderPeerId)?.peers(fullHash, peerIds);
-        } else {
-            // TODO: DHT lookup
+            return peerIds;
         }
+
+        return [];
     }
 
-    private onPeers(fullHash: string, peerList: string[]) {
-        //TODO: Do nothing
-    }
+    private getConnectionByPeerId(peerId: string): MediationProtocol {
+        const peerConnector = this.peerConnectorsWithId.get(peerId);
 
-    private onSignal(fullHash: string, senderPeerId: string, receiverPeerId: string, signalData: string) {
-        const targetMediation = this.peers.get(receiverPeerId);
-
-        if (targetMediation != null) {
-            targetMediation.signal(fullHash, senderPeerId, receiverPeerId, signalData);
+        if (peerConnector != null) {
+            return peerConnector.getConnection();
         } else {
             // TODO: Signal to other mediator
+            throw new Error("peerConnector is null");
         }
     }
 
-    private onAnnounce(seederPeerId: string, fullHash: string) {
-        let peerIds = this.fullHashesWithPeerIds.get(fullHash);
-
-        if (peerIds == null) {
-            peerIds = [seederPeerId];
+    private updatePeerIds(fullHash: string, peerId: string, remove: boolean) {
+        if (remove) {
+            this.removePeerId(fullHash, peerId);
         } else {
-            peerIds.push(seederPeerId);
+            this.addPeerId(fullHash, peerId);
         }
+    }
 
+    private addPeerId(fullHash: string, peerId: string) {
+        let peerIds = this.getPeerIdsByFullHash(fullHash);
+        peerIds.push(peerId);
         this.fullHashesWithPeerIds.set(fullHash, peerIds);
     }
 
-    private onFinish(seederPeerId: string, fullHash: string) {
-        let peerIds = this.fullHashesWithPeerIds.get(fullHash);
+    private removePeerId(fullHash: string, peerId: string) {
+        let peerIds = this.getPeerIdsByFullHash(fullHash);
+        peerIds = peerIds.filter(p => p != peerId);
 
-        if (peerIds != null) {
-            peerIds = peerIds.filter(peerId => peerId !== seederPeerId);
+        if (peerIds.length != 0) {
             this.fullHashesWithPeerIds.set(fullHash, peerIds);
+        } else {
+            this.fullHashesWithPeerIds.delete(fullHash);
         }
     }
-
-    /*private getConnectionByPeerId(peerId: string): PeerConnector{
-        return this.peerConnectors[0];
-    }*/
 }
