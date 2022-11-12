@@ -1,6 +1,0 @@
-{
-  "devDependencies": {
-    "browser-resolve": "^2.0.0",
-    "esmify": "^2.1.1"
-  }
-}
