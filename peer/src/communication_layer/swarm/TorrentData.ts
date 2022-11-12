@@ -75,14 +75,19 @@ export class TorrentData implements ITorrentData{
     }
 
     addPiece(piece_index: number, data: ArrayBuffer) {
+        if(this.info_dictionary.piece_hashes![piece_index]) {
+            if( generateFullHash([data]) !== this.info_dictionary.piece_hashes[piece_index] ) {
+                console.error("wrong piece received");
+                return;
+            }
+        }
 
         if(this.number_of_complete_pieces === 0) {
             this.announceCallback();
         }
-        //todo: check integrity of piece
 
         clearTimeout(this.piece_index_to_timeout_id.get(piece_index));
-
+        
         this.number_of_complete_pieces++;
         this.pieces[piece_index]  = data;
 

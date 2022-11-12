@@ -58,4 +58,3 @@ export function seed() {
     mc.announce(infoDictionary.full_hash);
 
 }
-    

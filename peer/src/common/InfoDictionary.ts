@@ -12,7 +12,7 @@ export class InfoDictionary {
         this.pieces_length = pieces_length;
         this.pieces_amount = pieces_amount;
         this.total_length = total_length;
-        this.piece_hashes = piece_hashes;
+        this.piece_hashes = piece_hashes || [];
     }
 }
 
