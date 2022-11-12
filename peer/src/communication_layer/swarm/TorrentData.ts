@@ -1,7 +1,40 @@
-import BitField from "bitfield";
 import { AnnounceEvent, CompleteEvent, ITorrentData } from "./ITorrentData";
 import {InfoDictionary} from "../../common/InfoDictionary";
+var crypto = require('crypto');
 
+function hash(input : string ) : string {
+    var shasum = crypto.createHash('sha1');
+    shasum.update(input);
+    return shasum.digest('hex');
+}
+
+export function generateFullHash(pieces: ArrayBuffer[]) : string {
+    let content: string[] = [];
+    pieces.forEach(piece => {
+        let str = "";
+        let view = new Uint8Array(piece);
+        for(let i = 0; i < view.length; i++) {
+            str += String.fromCharCode(view.at(i)!);
+        }
+        content.push(hash(str));
+    });
+    if(!!content) {
+        return generateMerkleRoot(content);
+    } else {
+        return "";
+    }
+}
+
+function generateMerkleRoot(hashes: string[]) : string {
+    if(hashes.length == 1) {
+        return hashes[0];
+    }
+    let newHashes = [];
+    for(let i = 0; i < hashes.length; i += 2) {
+        newHashes.push(hash(hashes[i] + hashes[i + 1]));
+    }
+    return generateMerkleRoot(newHashes);
+}
 
 export class TorrentData implements ITorrentData{
     private pieces : ArrayBuffer[];
@@ -58,15 +91,11 @@ export class TorrentData implements ITorrentData{
         }
     }
 
-    private complete() { //todo: find use for this or remove
-        this.completeCallback(this.pieces);
-        for(let i = 0; i < this.info_dictionary.pieces_amount; i++) { //todo: remove
-            let arr = new Uint8Array(this.pieces[i]);
-            for(let j = 0; j < 100; j++) {
-                if(i < 4 || j < 50) {
-                    //console.log(arr.at(j)); 
-                }
-            }
+    private complete() { 
+        if(this.info_dictionary.full_hash === generateFullHash(this.pieces)) {
+            this.completeCallback(this.pieces);
+        } else {
+            console.error("Received wrong file");
         }
     }
 

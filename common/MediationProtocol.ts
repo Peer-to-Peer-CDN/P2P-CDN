@@ -45,12 +45,10 @@ export class MediationProtocol {
     }
 
     public peers(fullHash: string, peerList: string[]) {
-        console.log("REMOVE: sending peers",peerList);
         this.stream.emit('peers', fullHash, peerList);
     }
 
     public signal(full_hash: string, receiverPeerId: string, signalData: string) {
-        console.log("REMOVE: protocol signaling", signalData);
         this.stream.emit('signal',full_hash, receiverPeerId, signalData);
     }
 

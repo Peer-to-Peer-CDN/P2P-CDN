@@ -24,7 +24,7 @@ export class TorrentManager {
         }));
     }
 
-
+//TODO revisit
     private generateFile(data: ArrayBuffer[], filename: string, filelength: number, piecelength: number): File { 
         let fileContent = new Uint8Array(filelength);
         let index = 0;
@@ -32,7 +32,7 @@ export class TorrentManager {
             let pieceContent = new Uint8Array(ab);
             fileContent.set(pieceContent, index++ * piecelength);
         });
-        let file = new File(data, filename ,{
+        let file = new File([fileContent], filename ,{
             type: "application/octet-stream"
         });
         return file;

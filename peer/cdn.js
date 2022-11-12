@@ -12427,11 +12427,9 @@ class MediationProtocol {
         this.stream.emit('get_peers', fullHash);
     }
     peers(fullHash, peerList) {
-        console.log("REMOVE: sending peers", peerList);
         this.stream.emit('peers', fullHash, peerList);
     }
     signal(full_hash, receiverPeerId, signalData) {
-        console.log("REMOVE: protocol signaling", signalData);
         this.stream.emit('signal', full_hash, receiverPeerId, signalData);
     }
     announce(fullHash) {
@@ -12448,12 +12446,13 @@ exports.MediationProtocol = MediationProtocol;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.InfoDictionary = void 0;
 class InfoDictionary {
-    constructor(full_hash, file_name, pieces_length, pieces_amount, total_length) {
+    constructor(full_hash, file_name, pieces_length, pieces_amount, total_length, piece_hashes) {
         this.full_hash = full_hash;
         this.file_name = file_name;
         this.pieces_length = pieces_length;
         this.pieces_amount = pieces_amount;
         this.total_length = total_length;
+        this.piece_hashes = piece_hashes;
     }
 }
 exports.InfoDictionary = InfoDictionary;
@@ -12475,6 +12474,7 @@ class TorrentManager {
             }
         }));
     }
+    //TODO revisit
     generateFile(data, filename, filelength, piecelength) {
         let fileContent = new Uint8Array(filelength);
         let index = 0;
@@ -12482,7 +12482,7 @@ class TorrentManager {
             let pieceContent = new Uint8Array(ab);
             fileContent.set(pieceContent, index++ * piecelength);
         });
-        let file = new File(data, filename, {
+        let file = new File([fileContent], filename, {
             type: "application/octet-stream"
         });
         return file;
@@ -12492,95 +12492,79 @@ exports.TorrentManager = TorrentManager;
 
 },{}],74:[function(require,module,exports){
 "use strict";
-
-var __importDefault = void 0 && (void 0).__importDefault || function (mod) {
-  return mod && mod.__esModule ? mod : {
-    "default": mod
-  };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
 };
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
+Object.defineProperty(exports, "__esModule", { value: true });
 exports.MediationClient = void 0;
 const PeerWire_1 = require("../peer/PeerWire");
 const MediationProtocol_1 = require("../../../../common/MediationProtocol");
 var io = require('socket.io-client');
-//import {io} from "socket.io-client";
 const simple_peer_1 = __importDefault(require("simple-peer"));
 class MediationClient {
-  constructor(peerId, socketFactory, establishedcallback) {
-    this.add_peer_event_handlers = new Map(); //full_hash => peer_event_handler()
-    this.RTCs = new Map(); //map peerId to SimplePeers instances
-    const socket = socketFactory();
-    this.protocol = new MediationProtocol_1.MediationProtocol(socket);
-    this.peerId = peerId;
-    this.protocol.handshake(this.peerId, MediationProtocol_1.ConnectionType.MEDIATION);
-    this.protocol.on('established', () => {
-      console.log("REMOVE: received established");
-      this.protocol.on('peers', (...args) => this.onPeers.apply(this, args));
-      this.protocol.on('signal', (...args) => this.onSignal.apply(this, args));
-    });
-  }
-  onPeers(full_hash, peerList) {
-    console.log("REMOVE: received peers", peerList);
-    peerList === null || peerList === void 0 ? void 0 : peerList.forEach(peer => {
-      let rtc = new simple_peer_1.default({
-        initiator: true
-      });
-      if (!this.RTCs.get(peer)) {
-        this.RTCs.set(peer, rtc);
-      }
-      rtc.on('connect', () => {
-        this.addPeer(full_hash, rtc, true);
-      });
-      rtc.on('signal', data => {
-        this.protocol.signal(full_hash, peer, JSON.stringify(data));
-      });
-    });
-  }
-  onSignal(full_hash, senderPeer, signalData) {
-    console.log("REMOVE: received signal", signalData);
-    let rtc = this.RTCs.get(senderPeer);
-    if (!rtc) {
-      //new peer trying to connect to us!
-      rtc = new simple_peer_1.default({
-        initiator: false
-      });
-      rtc.signal(JSON.parse(signalData));
-      rtc.on('signal', data => {
-        this.protocol.signal(full_hash, senderPeer, JSON.stringify(data));
-      });
-      rtc.on('connect', () => {
-        //@ts-ignore //rtc is not assignable to type IP2PTransport for some reason, should still work.
-        this.addPeer(full_hash, rtc, false);
-      });
-    } else {
-      //existing peer
-      rtc.signal(JSON.parse(signalData));
+    constructor(peerId, socketFactory, establishedcallback) {
+        this.add_peer_event_handlers = new Map(); //full_hash => peer_event_handler()
+        this.RTCs = new Map(); //map peerId to SimplePeers instances
+        const socket = socketFactory();
+        this.protocol = new MediationProtocol_1.MediationProtocol(socket);
+        this.peerId = peerId;
+        this.protocol.handshake(this.peerId, MediationProtocol_1.ConnectionType.MEDIATION);
+        this.protocol.on('established', () => {
+            this.protocol.on('peers', (...args) => this.onPeers.apply(this, args));
+            this.protocol.on('signal', (...args) => this.onSignal.apply(this, args));
+        });
     }
-  }
-  requestPeers(full_hash) {
-    console.log("REMOVE: requesting peers for:", full_hash);
-    this.protocol.get_peers(full_hash);
-  }
-  announce(full_hash) {
-    console.log("REMOVE: ANNOUNCDING");
-    this.protocol.announce(full_hash);
-  }
-  finish(full_hash) {
-    this.protocol.finish(full_hash);
-  }
-  registerForPeers(full_hash, event_handler) {
-    this.add_peer_event_handlers.set(full_hash, event_handler);
-  }
-  addPeer(full_hash, rtc, initiator) {
-    let cb = this.add_peer_event_handlers.get(full_hash);
-    if (cb) {
-      cb(torrent_data => {
-        return new PeerWire_1.PeerWire(rtc, torrent_data, initiator, this.peerId);
-      });
+    onPeers(full_hash, peerList) {
+        peerList === null || peerList === void 0 ? void 0 : peerList.forEach(peer => {
+            let rtc = new simple_peer_1.default({ initiator: true });
+            if (!this.RTCs.get(peer)) {
+                this.RTCs.set(peer, rtc);
+            }
+            rtc.on('connect', () => {
+                this.addPeer(full_hash, rtc, true);
+            });
+            rtc.on('signal', (data) => {
+                this.protocol.signal(full_hash, peer, JSON.stringify(data));
+            });
+        });
     }
-  }
+    onSignal(full_hash, senderPeer, signalData) {
+        let rtc = this.RTCs.get(senderPeer);
+        if (!rtc) { //new peer trying to connect to us!
+            rtc = new simple_peer_1.default({ initiator: false });
+            rtc.signal(JSON.parse(signalData));
+            rtc.on('signal', data => {
+                this.protocol.signal(full_hash, senderPeer, JSON.stringify(data));
+            });
+            rtc.on('connect', () => {
+                //@ts-ignore //rtc is not assignable to type IP2PTransport for some reason, should still work.
+                this.addPeer(full_hash, rtc, false);
+            });
+        }
+        else { //existing peer
+            rtc.signal(JSON.parse(signalData));
+        }
+    }
+    requestPeers(full_hash) {
+        this.protocol.get_peers(full_hash);
+    }
+    announce(full_hash) {
+        this.protocol.announce(full_hash);
+    }
+    finish(full_hash) {
+        this.protocol.finish(full_hash);
+    }
+    registerForPeers(full_hash, event_handler) {
+        this.add_peer_event_handlers.set(full_hash, event_handler);
+    }
+    addPeer(full_hash, rtc, initiator) {
+        let cb = this.add_peer_event_handlers.get(full_hash);
+        if (cb) {
+            cb((torrent_data) => {
+                return new PeerWire_1.PeerWire(rtc, torrent_data, initiator, this.peerId);
+            });
+        }
+    }
 }
 exports.MediationClient = MediationClient;
 
@@ -12591,7 +12575,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PeerWire = void 0;
-//const BittorrentProtocol = require('bittorrent-protocol');
 const bittorrent_protocol_1 = __importDefault(require("bittorrent-protocol"));
 const bitfield_1 = __importDefault(require("bitfield"));
 //type Wire = BittorrentProtocol.Wire;
@@ -12635,11 +12618,9 @@ class PeerWire {
         this.peer.on('request', (...args) => this.onRequest.apply(this, args));
     }
     run() {
-        console.log("REMOVE: peerwire running");
         if (this.torrent_data.isComplete()) {
             return;
         }
-        console.log('running');
         if (!this.choosePieceAndRequestOnFound()) {
             let intervalToken = setInterval(() => {
                 if (this.choosePieceAndRequestOnFound()) {
@@ -12663,16 +12644,13 @@ class PeerWire {
         return false;
     }
     request(index) {
-        console.log("REMOVE: requesting piece");
         this.torrent_data.acquirePiece(index);
         let info = this.torrent_data.info_dictionary;
         let piece_length = info.pieces_amount === index ?
             info.total_length % info.pieces_length :
             info.pieces_length;
         this.peer.unchoke();
-        console.log("unchoked!");
         if (!this.peer.peerChoking) {
-            console.log("requesting ... peer is not choking");
             this.peer.request(index, 0, piece_length, (err) => {
                 console.log('requested!');
                 if (err) {
@@ -12682,7 +12660,6 @@ class PeerWire {
         }
     }
     onPiece(index, offset, buffer) {
-        console.log('REMOVE: received peer');
         this.torrent_data.addPiece(index, buffer);
         if (!this.peer.peerChoking) {
             this.run();
@@ -12691,7 +12668,6 @@ class PeerWire {
     onChoke() {
     }
     onUnchoke() {
-        console.log('unchoked');
         this.run();
     }
     onInterested() {
@@ -12705,7 +12681,6 @@ class PeerWire {
     onHave(piece_index) {
     }
     onRequest(piece_index, offset, length, callback) {
-        console.log("received request!");
         if (this.torrent_data.havePiece(piece_index)) {
             callback(null, new Uint8Array(this.torrent_data.getPiece(piece_index).slice(offset, offset + length)));
         }
@@ -12736,7 +12711,6 @@ class SwarmManager {
         return this.swarm.length;
     }
     handleAddPeerEvent(peerWireFactory) {
-        console.log("REMOVE: handle add peer event called!");
         this.swarm.push(peerWireFactory(this.torrent_data));
     }
 }
@@ -12745,7 +12719,41 @@ exports.SwarmManager = SwarmManager;
 },{"./TorrentData":77}],77:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.TorrentData = void 0;
+exports.TorrentData = exports.generateFullHash = void 0;
+var crypto = require('crypto');
+function hash(input) {
+    var shasum = crypto.createHash('sha1');
+    shasum.update(input);
+    return shasum.digest('hex');
+}
+function generateFullHash(pieces) {
+    let content = [];
+    pieces.forEach(piece => {
+        let str = "";
+        let view = new Uint8Array(piece);
+        for (let i = 0; i < view.length; i++) {
+            str += String.fromCharCode(view.at(i));
+        }
+        content.push(hash(str));
+    });
+    if (!!content) {
+        return generateMerkleRoot(content);
+    }
+    else {
+        return "";
+    }
+}
+exports.generateFullHash = generateFullHash;
+function generateMerkleRoot(hashes) {
+    if (hashes.length == 1) {
+        return hashes[0];
+    }
+    let newHashes = [];
+    for (let i = 0; i < hashes.length; i += 2) {
+        newHashes.push(hash(hashes[i] + hashes[i + 1]));
+    }
+    return generateMerkleRoot(newHashes);
+}
 class TorrentData {
     constructor(info_dictionary, completeCallback, announceCallback, pieces = []) {
         this.piece_index_to_timeout_id = new Map();
@@ -12787,14 +12795,13 @@ class TorrentData {
         }
     }
     complete() {
-        this.completeCallback(this.pieces);
-        for (let i = 0; i < this.info_dictionary.pieces_amount; i++) { //todo: remove
-            let arr = new Uint8Array(this.pieces[i]);
-            for (let j = 0; j < 100; j++) {
-                if (i < 4 || j < 50) {
-                    //console.log(arr.at(j)); 
-                }
-            }
+        if (this.info_dictionary.full_hash === generateFullHash(this.pieces)) {
+            console.log(this.info_dictionary.full_hash);
+            console.log(generateFullHash(this.pieces));
+            this.completeCallback(this.pieces);
+        }
+        else {
+            console.error("Received wrong file");
         }
     }
     havePiece(piece_index) {
@@ -12815,7 +12822,6 @@ class TorrentData {
             return false;
         }
         this.piece_index_to_timeout_id.set(piece_index, setTimeout(() => {
-            //todo: cancel request
             this.piece_index_to_timeout_id.delete(piece_index);
         }, this.timeout_in_ms));
         return true;
@@ -12823,7 +12829,7 @@ class TorrentData {
 }
 exports.TorrentData = TorrentData;
 
-},{}],78:[function(require,module,exports){
+},{"crypto":149}],78:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.seed = exports.leech = void 0;
@@ -12833,6 +12839,23 @@ const SwarmManager_1 = require("./communication_layer/swarm/SwarmManager");
 const TorrentData_1 = require("./communication_layer/swarm/TorrentData");
 const FileIncluder_1 = require("./user_layer/FileIncluder");
 const socket_io_client_1 = require("socket.io-client");
+let data = [];
+for (let i = 0; i < 4; i++) {
+    data.push(new ArrayBuffer(100));
+    let content = new Uint8Array(data[i]);
+    let arr = [];
+    for (let j = 0; j < 100; j++) {
+        arr.push(48 + i);
+    }
+    content.set(arr, 0);
+}
+data.push(new ArrayBuffer(50));
+let content = new Uint8Array(data[4]);
+let arr = [];
+for (let i = 0; i < 50; i++) {
+    arr.push(48 + 4);
+}
+content.set(arr, 0);
 function leech() {
     var crypto = require('crypto');
     const defaultIdentityGenerator = {
@@ -12843,151 +12866,21 @@ function leech() {
             return id;
         }
     };
-    let infoDictionary = new InfoDictionary_1.InfoDictionary("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "test.txt", 100, 5, 450);
+    let hash = (0, TorrentData_1.generateFullHash)(data);
+    let infoDictionary = new InfoDictionary_1.InfoDictionary(hash, "test.txt", 100, 5, 450, []);
     let fileIncluder = new FileIncluder_1.FileIncluder([infoDictionary], "localhost", 8888, defaultIdentityGenerator.generateIdentity);
     fileIncluder.includeDownload(".test", "test.txt");
 }
 exports.leech = leech;
 function seed() {
-    let data = [];
-    for (let i = 0; i < 4; i++) {
-        data.push(new ArrayBuffer(100));
-        let content = new Uint8Array(data[i]);
-        let arr = [];
-        for (let j = 0; j < 100; j++) {
-            arr.push(48 + i);
-        }
-        content.set(arr, 0);
-    }
-    data.push(new ArrayBuffer(50));
-    let content = new Uint8Array(data[4]);
-    let arr = [];
-    for (let i = 0; i < 50; i++) {
-        arr.push(48 + 4);
-    }
-    content.set(arr, 0);
-    let infoDictionary = new InfoDictionary_1.InfoDictionary("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "test.txt", 100, 5, 450);
+    let hash = (0, TorrentData_1.generateFullHash)(data);
+    let infoDictionary = new InfoDictionary_1.InfoDictionary(hash, "test.txt", 100, 5, 450);
     let torrent_data = new TorrentData_1.TorrentData(infoDictionary, () => { }, () => { }, data);
     let mc = new MediationClient_1.MediationClient("1123456789012345678901234567890234567890", () => (0, socket_io_client_1.io)(`ws://localhost:8888`));
     let sm = new SwarmManager_1.SwarmManager(infoDictionary, mc, () => { }, torrent_data);
     mc.announce(infoDictionary.full_hash);
 }
 exports.seed = seed;
-/*
-let data: ArrayBuffer[] = [];
-
-for(let i = 0; i < 4; i++) {
-    data.push(new ArrayBuffer(100))
-    let content = new Uint8Array(data[i]);
-    let arr = [];
-    for(let j = 0; j <100; j++) {
-        arr.push(48 + i);
-    }
-
-    content.set(arr, 0);
-}
-data.push(new ArrayBuffer(50));
-let content = new Uint8Array(data[4]);
-let arr = [];
-for(let i = 0; i< 50; i++) {
-    arr.push(48 + 4);
-}
-content.set(arr, 0);
-
-let fileIncluder = new FileIncluder([infoDictionary], "localhost", 8888);
-function includeFile(cssString:string, fileName: string) {
-    fileIncluder.includeDownload(cssString, fileName);
-}
-
-function seedFile(data: ArrayBuffer[], infoDictionary: InfoDictionary) {
-    let torrent_data = new TorrentData(infoDictionary, () => {}, () => {}, data);
-    let mc = new MediationClient("1123456789012345678901234567890234567890", "localhost", 8888);
-    let sm = new SwarmManager(infoDictionary, mc, () => {}, torrent_data);
-    mc.announce(infoDictionary.full_hash);
-}
-
-const io = new Server(8888);
-io.on("connection", (socket) => {
-    let mp = new MediationProtocol(socket);
-    mp.on('get_peers', full_hash => {
-        console.log(full_hash);
-    });
-});
-
-
-    seedFile(data, infoDictionary);
-    includeFile(".test", "hello.txt");
-
-
-
-
-
-/*
-let leecher: IP2PTransport = new SimplePeer({initiator: true});
-let seeder: IP2PTransport = new SimplePeer({initiator: false});
-
-leecher.on('signal', data => {
-    seeder.signal(data);
-});
-
-seeder.on('signal', (data) => {
-    leecher.signal(data);
-});*/
-//let wireLeech = new BittorrentProtocol();
-//let wireSeed = new BittorrentProtocol();
-//leecher.pipe(wireLeech).pipe(leecher);
-//seeder.pipe(wireSeed).pipe(seeder);
-/*let id = new InfoDictionary("ffffffffffffffffffffffffffffffffffffffff", "testfile", 100,5,450);
-let data: Array<ArrayBuffer> = [new ArrayBuffer(100), new ArrayBuffer(100), new ArrayBuffer(100), new ArrayBuffer(100), new ArrayBuffer(50)];
-
-for(let i = 0; i < 5; i++) {
-    let holder = new Uint8Array(data[i]);
-    let arr: number[] = [];
-    let max = i < 4 ? 100 : 50;
-    for(let i = 0; i < max; i++) {
-        arr.push(i % 26 + 26);
-    }
-    holder.set(arr, 0);
-}*/
-/*
-let content = new Uint8Array(50);
-let arr = [];
-for(let i = 48; i < 48 + 50; i++) {
-    arr.push(i);
-}
-content.set(arr);
-
-
-let file = new File([content], "test.txt", {type: "application/octet-stream"});
-let includer = new FileIncluder();
-
-const div = document.createElement('div');
-div.innerHTML = "<h1>hello world</h1>";
-document.body.appendChild(div);
-div.className="hello";
-
-includer.file = file;
-includer.includeDownload(".hello");
-*/
-/*
-// Leecher side (tested)
-let td = new TorrentData(id, _ => {console.log("complete!!");});
-let leecherPeerId = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
-leecher.on('connect', () => {
-    console.log("leecher connected");
-
-    let leecherPeer = new PeerWire(leecher, td, true, leecherPeerId);
-});
-
-// Seeder side (tester)
-let td2 = new TorrentData(id,_ => {console.log("complete!!");}, data);
-let seederPeerid = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
-seeder.on('connect', () => {
-    console.log("seeder connected");
-
-    let seederPeer = new PeerWire(seeder, td2, false, seederPeerid);
-});
-*/ 
 
 },{"./common/InfoDictionary":72,"./communication_layer/mediation/MediationClient":74,"./communication_layer/swarm/SwarmManager":76,"./communication_layer/swarm/TorrentData":77,"./user_layer/FileIncluder":79,"crypto":149,"socket.io-client":59}],79:[function(require,module,exports){
 "use strict";
