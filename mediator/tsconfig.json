@@ -6,7 +6,7 @@
         "noImplicitAny": true,
         "allowSyntheticDefaultImports": true,
         "strictNullChecks": true,
-        "watch": true,
+        "watch": false,
         "outDir": "out"
     },
     "exclude": [

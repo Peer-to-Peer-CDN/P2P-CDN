@@ -25,11 +25,11 @@ export class PeerConnector implements IMediationSemantic {
         // Do nothing, because case 'peer sends list of peers to mediator' is not supported
     }
 
-    public onSignal(receiverPeerId: string, signalData: string) {
+    public onSignal(full_hash:string, receiverPeerId: string, signalData: string) {
         const targetMediation = this.getConnectionByPeerId(receiverPeerId);
 
         if (targetMediation != null) {
-            targetMediation.signal(this.peerId, signalData);
+            targetMediation.signal(full_hash, this.peerId, signalData);
         }
     }
 

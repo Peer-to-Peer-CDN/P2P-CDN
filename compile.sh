@@ -1,6 +1,8 @@
-tsc --project mediator/tsconfig.json --outDir out/mediator
-cd peer
+cd mediator
 tsc --project tsconfig.json --outDir out
-browserify out/peer/src/index.js --s cdn -p esmify > ../out/cdn.js
-rm -rf out/
+cd ..
+cd peer
+tsc --project tsconfig.json --outDir out/peer
+browserify out/peer/peer/src/index.js --s cdn -p esmify > cdn.js
+rm -rf out
 cd ..

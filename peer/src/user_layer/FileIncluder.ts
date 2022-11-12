@@ -11,7 +11,8 @@ export class FileIncluder {
     mediationClient : MediationClient;
     peerId: string;
 
-    constructor(torrents: InfoDictionary[], mediatorAddress: string, mediatorPort: number) {
+    constructor(torrents: InfoDictionary[], mediatorAddress: string, mediatorPort: number, identityGenerator:any) {
+        this.peerId = identityGenerator();
         this.torrentManager = new TorrentManager();
         this.torrents = torrents;
         this.mediationClient = new MediationClient(this.peerId, () => io(`ws://${mediatorAddress}:${mediatorPort}`)); 
@@ -46,7 +47,8 @@ export class FileIncluder {
     }
 
     private fetchFile(fileName: string, callback: (file: File) => void) {
-        let dict = this.torrents.find(dict => {dict.file_name === fileName});
+        let dict = this.torrents.find(dict => dict.file_name === fileName);
+        console.log(this.torrents, "!");
         if(!dict) {
             console.error("Configuration does not contain a file called", fileName);
             return;

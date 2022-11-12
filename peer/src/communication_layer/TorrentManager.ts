@@ -11,6 +11,7 @@ export class TorrentManager {
 
 
     constructor() {
+        this.swarms = new Map();
     }
 
     addTorrent(info_dictionary: InfoDictionary, createSwarmManager: SwarmManagerFactory, completeEvent: FileEvent) {

@@ -92,7 +92,6 @@ export class TorrentData implements ITorrentData{
         }
 
         this.piece_index_to_timeout_id.set(piece_index, setTimeout(() => {
-            //todo: cancel request
             this.piece_index_to_timeout_id.delete(piece_index);
         }, this.timeout_in_ms));
 

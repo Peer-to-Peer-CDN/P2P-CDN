@@ -6,9 +6,10 @@ import {MediationServer} from "./communication/MediationServer";
 import {io} from "socket.io-client";
 import {ConnectionType, MediationProtocol} from "../../common/MediationProtocol";
 
-const ms = new MediationServer(new Server(8888));
+const ms = new MediationServer(new Server(8888, {cors:{origin: '*'}}));
 ms.run();
 
+/*
 const socket1 = io("ws://localhost:8888");
 const socket2 = io("ws://localhost:8888");
 const socket3 = io("ws://localhost:8888");
@@ -50,4 +51,4 @@ setTimeout(() => { // Timeout because of race condition
 
 function onGetPeers(actualPeer: string, fullHash: string, peerList: string[]) {
     console.log("onPeers " + actualPeer + ". FullHash: " + fullHash + ". Peers: " + JSON.stringify(peerList));
-}
+} */

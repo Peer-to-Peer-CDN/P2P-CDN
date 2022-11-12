@@ -20,6 +20,7 @@ export class SwarmManager {
             });
         }
         mediation_client.registerForPeers(info_dictionary.full_hash , this.handleAddPeerEvent.bind(this));
+        mediation_client.requestPeers(this.torrent_data.info_dictionary.full_hash);
     }
 
     private swarmSize () :number {

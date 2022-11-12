@@ -51,7 +51,6 @@ export class MediationServer {
 
     private getPeerIdsByFullHash(fullHash: string): string[] {
         const peerIds = this.fullHashesWithPeerIds.get(fullHash);
-
         if (peerIds != null) {
             return peerIds;
         }
@@ -61,7 +60,6 @@ export class MediationServer {
 
     private getConnectionByPeerId(peerId: string): MediationProtocol {
         const peerConnector = this.peerConnectorsWithId.get(peerId);
-
         if (peerConnector != null) {
             return peerConnector.getConnection();
         } else {
