@@ -19,11 +19,7 @@ export class FileIncluder {
     }
 
     includeDownload(cssString: string, fileName:string) {
-        const element = document.querySelector(cssString);
-        if(!element) {
-            console.error(`Could not find "${cssString}"`);
-            return;
-        }
+        const element = this.loadElementOrError(cssString);
 
         const parent = element.parentElement;
         if(!parent) {
@@ -46,6 +42,17 @@ export class FileIncluder {
         });
     }
 
+    includeImage(cssString: string, fileName: string) {
+        const element = this.loadElementOrError(cssString) as HTMLImageElement;
+        this.fetchFile(fileName, (file) => {
+            const reader = new FileReader();
+            reader.onload = (link) => {
+                element.src = link.target?.result as string;
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
     private fetchFile(fileName: string, callback: (file: File) => void) {
         let dict = this.torrents.find(dict => dict.file_name === fileName);
         console.log(this.torrents, "!");
@@ -54,5 +61,15 @@ export class FileIncluder {
             return;
         }
         this.torrentManager.addTorrent(dict, (complete: CompleteEvent) => new SwarmManager(dict!, this.mediationClient, complete), callback);
+    }
+
+    private loadElementOrError(cssString: string) : Element {
+        const element = document.querySelector(cssString);
+        if(!element) {
+            console.error(`Could not find "${cssString}"`);
+            throw new Error(`Could not find element identified by ${cssString}`);
+        }
+
+        return element;
     }
 }

@@ -7,16 +7,23 @@
     <script src="cdn.js"></script>
     <script defer>
         window.addEventListener('load', () => {
-            cdn.includeDownloads(
-                [{
+            let id = {
                     "full_hash": "3c1107c6b63cf932f14f13b44a651a42c5ba0919",
                     "file_name": "288.png",
                     "pieces_length": 1000,
                     "pieces_amount": 180,
                     "total_length": 179334,
                     "piece_hashes": []
-                }],
+                };
+            cdn.includeDownloads(
+                [id],
                 [".test"],
+                "localhost",
+                8888
+            );
+            cdn.includeImages(
+                [id],
+                [".test2"],
                 "localhost",
                 8888
             );
@@ -26,5 +33,6 @@
 </head>
 <body>
     <h1 class="test">asdf</h1>
+    <img class="test2" src="" alt="">
 </body>
 </html>

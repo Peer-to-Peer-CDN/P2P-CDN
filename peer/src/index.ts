@@ -19,13 +19,18 @@ const defaultIdentityGenerator = {
 
 
 export function includeDownloads(infoDictionaries: InfoDictionary[], cssStrings: string[], mediatorAddress: string, mediatorPort: number) { 
-    if(infoDictionaries.length !== cssStrings.length) {
-        console.error("Amount of infodictionaries must match amount of css-strings");
-        return;
-    }
+    compareLengthAndThrowIfUnequal(infoDictionaries, cssStrings, "infodictionaries length must match cssstring length");
     let fileIncluder = new FileIncluder(infoDictionaries, mediatorAddress, mediatorPort, defaultIdentityGenerator.generateIdentity);
     for(let i = 0; i < infoDictionaries.length; i++) {
         fileIncluder.includeDownload(cssStrings[i], infoDictionaries[i].file_name);
+    }
+}
+
+export function includeImages(infoDictionaries: InfoDictionary[], cssStrings: string[], mediatorAddress: string, mediatorPort: number) {
+    compareLengthAndThrowIfUnequal(infoDictionaries, cssStrings, "infodictionaries length must match cssstring length");
+    let fileIncluder = new FileIncluder(infoDictionaries, mediatorAddress, mediatorPort, defaultIdentityGenerator.generateIdentity);
+    for(let i = 0; i < infoDictionaries.length; i++) {
+        fileIncluder.includeImage(cssStrings[i], infoDictionaries[i].file_name);
     }
 }
 
@@ -75,4 +80,10 @@ function assembleInfoDictionary(file: File) : Promise<FilePackage> {
         return fp;
     });
     
+}
+
+function compareLengthAndThrowIfUnequal(x: any, y:any, errorMsg: string) {
+    if(x.length !== y.length) {
+        throw new Error(errorMsg);
+    }
 }
