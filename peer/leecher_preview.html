@@ -7,7 +7,19 @@
     <script src="cdn.js"></script>
     <script defer>
         window.addEventListener('load', () => {
-            cdn.leech();
+            cdn.includeDownloads(
+                [{
+                    "full_hash": "3c1107c6b63cf932f14f13b44a651a42c5ba0919",
+                    "file_name": "288.png",
+                    "pieces_length": 1000,
+                    "pieces_amount": 180,
+                    "total_length": 179334,
+                    "piece_hashes": []
+                }],
+                [".test"],
+                "localhost",
+                8888
+            );
         });
     </script>
     <title>Document</title>

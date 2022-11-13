@@ -6,10 +6,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="cdn.js"></script>
     <script type="text/JavaScript"defer>
-        cdn.seed();
+        window.addEventListener("load", () => {
+            let fileInput = document.querySelector("#fileInput");
+
+            fileInput.addEventListener("change", () => {
+                let file = fileInput.files[0];
+                cdn.seedFile(file, "localhost", 8888);
+            },false);
+        });
+        
+        //cdn.seed();
     </script>
     <title>Document</title>
 </head>
 <body>
+    <input type="file" id="fileInput">
 </body>
 </html>

@@ -17,6 +17,7 @@ export class PeerConnector implements IMediationSemantic {
     }
 
     public onGetPeers(fullHash: string) {
+        console.log("getting peers", fullHash, this.peerId);
         const peerIds = this.getPeerIdsByFullHash(fullHash).filter((peerId: string) => peerId != this.peerId);
         this.mediation.peers(fullHash, peerIds);
     }
@@ -34,6 +35,7 @@ export class PeerConnector implements IMediationSemantic {
     }
 
     public onAnnounce(fullHash: string) {
+        console.log("announced", fullHash, this.peerId);
         this.updatePeerIds(fullHash, this.peerId, false);
     }
 

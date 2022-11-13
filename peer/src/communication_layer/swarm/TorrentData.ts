@@ -26,7 +26,7 @@ export function generateFullHash(pieces: ArrayBuffer[]) : string {
 }
 
 function generateMerkleRoot(hashes: string[]) : string {
-    if(hashes.length == 1) {
+    if(hashes.length <= 1) {
         return hashes[0];
     }
     let newHashes = [];
@@ -75,6 +75,7 @@ export class TorrentData implements ITorrentData{
     }
 
     addPiece(piece_index: number, data: ArrayBuffer) {
+        console.log("REMOVE: received piece");
         if(this.info_dictionary.piece_hashes![piece_index]) {
             if( generateFullHash([data]) !== this.info_dictionary.piece_hashes[piece_index] ) {
                 console.error("wrong piece received");

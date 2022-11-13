@@ -3,58 +3,76 @@ import { MediationClient } from "./communication_layer/mediation/MediationClient
 import { SwarmManager } from "./communication_layer/swarm/SwarmManager";
 import { generateFullHash, TorrentData } from "./communication_layer/swarm/TorrentData";
 import { FileIncluder } from "./user_layer/FileIncluder";
-import { MediationEventCallback, MediationProtocol } from "../../common/MediationProtocol";
 import {io} from 'socket.io-client';
+var crypto = require('crypto');
 
-let data: ArrayBuffer[] = [];
 
-    for(let i = 0; i < 4; i++) {
-        data.push(new ArrayBuffer(100))
-        let content = new Uint8Array(data[i]);
-        let arr = [];
-        for(let j = 0; j <100; j++) {
-            arr.push(48 + i);
-        }
-
-        content.set(arr, 0); 
-    }
-    data.push(new ArrayBuffer(50));
-    let content = new Uint8Array(data[4]);
-    let arr = [];
-    for(let i = 0; i< 50; i++) {
-        arr.push(48 + 4);
-    }
-    content.set(arr, 0);
-
-export function leech() {
-    var crypto = require('crypto');
-
-    const defaultIdentityGenerator = {
-            generateIdentity() {
+const defaultIdentityGenerator = {
+    generateIdentity() {
                 var shasum = crypto.createHash('sha1');
-                shasum.update(Math.random());
-            
+                shasum.update((Math.random() * 1000).toString());
                 let id:string = shasum.digest('hex');
+                console.log(id);
                 return id;
             }
-        };
+};
 
-    let hash = generateFullHash(data)
 
-    let infoDictionary = new InfoDictionary(hash, "test.txt", 100, 5, 450, []);
-    let fileIncluder = new FileIncluder([infoDictionary], "localhost", 8888, defaultIdentityGenerator.generateIdentity);
-    fileIncluder.includeDownload(".test", "test.txt");
-
+export function includeDownloads(infoDictionaries: InfoDictionary[], cssStrings: string[], mediatorAddress: string, mediatorPort: number) { 
+    if(infoDictionaries.length !== cssStrings.length) {
+        console.error("Amount of infodictionaries must match amount of css-strings");
+        return;
+    }
+    let fileIncluder = new FileIncluder(infoDictionaries, mediatorAddress, mediatorPort, defaultIdentityGenerator.generateIdentity);
+    for(let i = 0; i < infoDictionaries.length; i++) {
+        fileIncluder.includeDownload(cssStrings[i], infoDictionaries[i].file_name);
+    }
 }
-export function seed() {
+
+export function seedFile(file: File, mediatorAddress:string, mediatorPort: number) {
+
+    assembleInfoDictionary(file).then(fp => {
+        console.log("Seeding file: ", fp.infoDictionary);
+        let torrentData = new TorrentData(fp.infoDictionary, () => {}, () => {}, fp.data);
+        let mc = new MediationClient(defaultIdentityGenerator.generateIdentity(), () => io(`ws://${mediatorAddress}:${mediatorPort}`));
+        let sm = new SwarmManager(fp.infoDictionary, mc, () => {}, torrentData);
+        mc.announce(fp.infoDictionary.full_hash);
+    });
+}
+
+export function generateArrayBufferArray(infoDictionary: InfoDictionary, file: File) : Promise<ArrayBuffer[]>{
+    if(infoDictionary.total_length !== file.size) {
+        console.error("file size must match specified size of meta-data");
+    }
+    let aba : ArrayBuffer[] = [];
+    let promise = file.arrayBuffer().then((ab) => {
+        for(let i = 0; i < infoDictionary.pieces_amount; i++) {
+
+            let begin = i * infoDictionary.pieces_length;
+            let end = i === infoDictionary.pieces_amount - 1 ? infoDictionary.total_length : begin + infoDictionary.pieces_length;
+            aba.push(ab.slice(begin, end));
+        }
+        return aba;
+    });
+    return promise;
+}
+
+class FilePackage {
+    infoDictionary: InfoDictionary;
+    data: ArrayBuffer[];
+}
+
+const pieces_length = 1000;
+function assembleInfoDictionary(file: File) : Promise<FilePackage> {
+    let pieces_amount = file.size % pieces_length == 0 ? file.size / pieces_length : Math.floor(file.size / pieces_length) + 1;
+    let info_dictionary = new InfoDictionary("", file.name, pieces_length, pieces_amount, file.size);
+    let aba = generateArrayBufferArray(info_dictionary, file);
+    return aba.then(buffer => {
+        info_dictionary.full_hash = generateFullHash(buffer);
+        let fp = new FilePackage();
+        fp.infoDictionary = info_dictionary;
+        fp.data = buffer;
+        return fp;
+    });
     
-    let hash = generateFullHash(data);
-
-    let infoDictionary = new InfoDictionary(hash, "test.txt", 100, 5, 450);
-
-    let torrent_data = new TorrentData(infoDictionary, () => {}, () => {}, data);
-    let mc = new MediationClient("1123456789012345678901234567890234567890", () => io(`ws://localhost:8888`));
-    let sm = new SwarmManager(infoDictionary, mc, () => {}, torrent_data);
-    mc.announce(infoDictionary.full_hash);
-
 }
