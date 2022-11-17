@@ -36,6 +36,7 @@ function generateMerkleRoot(hashes: string[]) : string {
     return generateMerkleRoot(newHashes);
 }
 
+export type addPieceEventHandler = (index: number) => void;
 export class TorrentData implements ITorrentData{
     private pieces : ArrayBuffer[];
     private piece_index_to_timeout_id = new Map();
@@ -44,6 +45,8 @@ export class TorrentData implements ITorrentData{
     private number_of_complete_pieces = 0;
     private completeCallback: CompleteEvent;
     private announceCallback: AnnounceEvent;
+
+    addPieceEventListeners: addPieceEventHandler[] = [];
 
     constructor(info_dictionary: InfoDictionary, completeCallback: CompleteEvent, announceCallback: AnnounceEvent, pieces: ArrayBuffer[] = []) {
         this.info_dictionary = info_dictionary;
@@ -88,6 +91,7 @@ export class TorrentData implements ITorrentData{
 
         clearTimeout(this.piece_index_to_timeout_id.get(piece_index));
         
+        this.addPieceEventListeners.forEach(cb => {cb(piece_index);});
         this.number_of_complete_pieces++;
         this.pieces[piece_index]  = data;
 

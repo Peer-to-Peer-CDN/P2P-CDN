@@ -29,6 +29,8 @@ export class SwarmManager {
         return this.swarm.length;
     }
     private handleAddPeerEvent(peerWireFactory: PeerWireFactory) {
-        this.swarm.push(peerWireFactory(this.torrent_data));
+        let peer = peerWireFactory(this.torrent_data);
+        this.torrent_data.addPieceEventListeners.push(idx => peer.onNewPiece.apply(peer, [idx]));
+        this.swarm.push(peer);
     }
 }

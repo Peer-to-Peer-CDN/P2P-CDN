@@ -11,6 +11,7 @@ export class PeerWire implements IPeerWire{
     private torrent_data : ITorrentData;
     private peer: any;
     private readonly no_pieces_timeout: number = 500;
+    private no_pieces_timeout_token: any;
 
     constructor(stream: IP2PTransport, torrent_data: ITorrentData, initiator: boolean, peerId: string) {
         this.torrent_data = torrent_data;
@@ -41,6 +42,10 @@ export class PeerWire implements IPeerWire{
         this.registerHandlers();
     }
 
+    onNewPiece(index: number) {
+        this.peer.have(index);
+    }
+
     private registerHandlers() {
         this.peer.on('piece', (...args:any[]) => this.onPiece.apply(this, args));
         this.peer.on('choke',  (...args:any[]) => this.onChoke.apply(this, args));
@@ -58,9 +63,9 @@ export class PeerWire implements IPeerWire{
             return;
         }
         if(!this.choosePieceAndRequestOnFound()) {
-            let intervalToken = setInterval(() => {
+            this.no_pieces_timeout_token = setInterval(() => {
                 if(this.choosePieceAndRequestOnFound()) {
-                    clearInterval(intervalToken);
+                    clearInterval(this.no_pieces_timeout_token);
                 } 
             }, this.no_pieces_timeout)   
         }
@@ -68,7 +73,7 @@ export class PeerWire implements IPeerWire{
 
     private choosePieceAndRequestOnFound() : boolean{
         let index = this.torrent_data.nextNeededPieceIndex();
-        for(let i = 0; i < this.torrent_data.remainingAmount(); i++) {
+        for(let i = 0; i < this.torrent_data.remainingAmount() && !this.peer.peerChoking; i++) {
             if(this.peer.peerPieces.get(index)) {
                 this.request(index);
                 return true;
@@ -104,7 +109,7 @@ export class PeerWire implements IPeerWire{
     } 
 
     private onChoke() {
-
+        clearInterval(this.no_pieces_timeout_token);
     }
 
     private onUnchoke() {
@@ -125,7 +130,6 @@ export class PeerWire implements IPeerWire{
     }
 
     private onHave(piece_index : number) {
-
     }
 
     private onRequest(piece_index : number, offset : number, length : number, callback :any) {
