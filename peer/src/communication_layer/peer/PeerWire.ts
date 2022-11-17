@@ -70,7 +70,6 @@ export class PeerWire implements IPeerWire{
         let index = this.torrent_data.nextNeededPieceIndex();
         for(let i = 0; i < this.torrent_data.remainingAmount(); i++) {
             if(this.peer.peerPieces.get(index)) {
-                console.log("requesting!");
                 this.request(index);
                 return true;
             } else {
@@ -90,7 +89,6 @@ export class PeerWire implements IPeerWire{
         this.peer.unchoke()
         if(!this.peer.peerChoking) {
             this.peer.request(index, 0, piece_length, (err: Error) => {
-                console.log('requested!');
                 if(err) {
                     console.error(err);
                 }

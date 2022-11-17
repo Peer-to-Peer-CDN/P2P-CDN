@@ -6,22 +6,34 @@ import { SwarmManager } from "./swarm/SwarmManager";
 
 export type FileEvent = (file: File) => void;
 export class TorrentManager {
-    swarms: Map<string, SwarmManager>;
-    callbacks : Map<string, FileEvent>;
+    swarms: Map<string, SwarmManager> = new Map();
+    callbacks : Map<string, FileEvent[]> = new Map();
+    doneFiles: Map<string, File> = new Map();
 
 
     constructor() {
-        this.swarms = new Map();
     }
 
     addTorrent(info_dictionary: InfoDictionary, createSwarmManager: SwarmManagerFactory, completeEvent: FileEvent) {
-        this.swarms.set(info_dictionary.full_hash, createSwarmManager((data: ArrayBuffer[]) => {
-            let file: File = this.generateFile(data, info_dictionary.file_name, info_dictionary.total_length, info_dictionary.pieces_length);
-            let callback = completeEvent 
-            if(callback) {
-                callback(file);
-            }
-        }));
+        if(this.doneFiles.get(info_dictionary.full_hash)) {
+            completeEvent(this.doneFiles.get(info_dictionary.full_hash)!);
+            return;
+        }
+
+        if(!this.callbacks.get(info_dictionary.full_hash)) {
+            this.callbacks.set(info_dictionary.full_hash, [completeEvent]);
+            this.swarms.set(info_dictionary.full_hash, createSwarmManager((data: ArrayBuffer[]) => {
+                let file: File = this.generateFile(data, info_dictionary.file_name, info_dictionary.total_length, info_dictionary.pieces_length);
+                this.doneFiles.set(info_dictionary.full_hash, file);
+                this.callbacks.get(info_dictionary.full_hash)?.forEach(cb => {
+                    cb(file);
+                });
+            }));
+        } else {
+            this.callbacks.get(info_dictionary.full_hash)?.push(completeEvent);
+        }
+        
+            
     }
 
 //TODO revisit
