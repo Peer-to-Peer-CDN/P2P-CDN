@@ -2,8 +2,8 @@ import {MediationProtocol} from "../../../common/MediationProtocol";
 import {IMediationSemantic} from "./IMediationSemantic";
 
 export class PeerConnector implements IMediationSemantic {
-    public readonly mediation: MediationProtocol;
-    public peerId: string;
+    private readonly peerId: string;
+    private readonly mediation: MediationProtocol;
     private readonly getConnectionByPeerId: Function;
     private readonly getPeerIdsByFullHash: Function;
     private readonly updatePeerIds: Function;
