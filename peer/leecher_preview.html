@@ -15,18 +15,15 @@
                     "total_length": 179334,
                     "piece_hashes": []
                 };
+            cdn.initialize([id], "localhost", 8888);
             cdn.includeDownloads(
-                [id],
+                ["288.png"],
                 [".test"],
-                "localhost",
-                8888
             );
-            cdn.includeImages(
-                [id],
+            /*cdn.includeImages(
+                ["288.png"],
                 [".test2"],
-                "localhost",
-                8888
-            );
+            );*/
         });
     </script>
     <title>Document</title>

@@ -17,20 +17,30 @@ const defaultIdentityGenerator = {
             }
 };
 
+let fileIncluder: FileIncluder;
+export function initialize(infoDictionaries: InfoDictionary[], mediatorAddress: string, mediatorPort: number) {
+    fileIncluder = new FileIncluder(infoDictionaries, mediatorAddress, mediatorPort, defaultIdentityGenerator.generateIdentity);
+}
 
-export function includeDownloads(infoDictionaries: InfoDictionary[], cssStrings: string[], mediatorAddress: string, mediatorPort: number) { 
-    compareLengthAndThrowIfUnequal(infoDictionaries, cssStrings, "infodictionaries length must match cssstring length");
-    let fileIncluder = new FileIncluder(infoDictionaries, mediatorAddress, mediatorPort, defaultIdentityGenerator.generateIdentity);
-    for(let i = 0; i < infoDictionaries.length; i++) {
-        fileIncluder.includeDownload(cssStrings[i], infoDictionaries[i].file_name);
+function checkInitializedOrError() {
+    if(!fileIncluder) {
+        console.error("please call function: initialize first");
     }
 }
 
-export function includeImages(infoDictionaries: InfoDictionary[], cssStrings: string[], mediatorAddress: string, mediatorPort: number) {
-    compareLengthAndThrowIfUnequal(infoDictionaries, cssStrings, "infodictionaries length must match cssstring length");
-    let fileIncluder = new FileIncluder(infoDictionaries, mediatorAddress, mediatorPort, defaultIdentityGenerator.generateIdentity);
-    for(let i = 0; i < infoDictionaries.length; i++) {
-        fileIncluder.includeImage(cssStrings[i], infoDictionaries[i].file_name);
+export function includeDownloads(fileNames: string[], cssStrings: string[]) { 
+    checkInitializedOrError();
+    compareLengthAndThrowIfUnequal(fileNames, cssStrings, "fileNames length must match cssstring length");
+    for(let i = 0; i < fileNames.length; i++) {
+        fileIncluder.includeDownload(cssStrings[i], fileNames[i]);
+    }
+}
+
+export function includeImages(fileNames: string[], cssStrings: string[], mediatorAddress: string, mediatorPort: number) {
+    checkInitializedOrError();
+    compareLengthAndThrowIfUnequal(fileNames, cssStrings, "fileNames length must match cssstring length");
+    for(let i = 0; i < fileNames.length; i++) {
+        fileIncluder.includeImage(cssStrings[i], fileNames[i]);
     }
 }
 

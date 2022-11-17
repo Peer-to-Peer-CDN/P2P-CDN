@@ -42,8 +42,11 @@ export class MediationServer {
                 mediation.on('finish', (...args) => semantic.onFinish.apply(semantic, args));
 
                 socket.on('disconnect', () => {
+                    console.log("disconnect");
+                    console.log(this.peerConnectorsWithId);
                     // TODO: Delete all peer ids from fullHashesWithPeerIds
                     this.peerConnectorsWithId.delete(peerId);
+                    console.log(this.peerConnectorsWithId);
                 });
             });
         });
@@ -58,13 +61,14 @@ export class MediationServer {
         return [];
     }
 
-    private getConnectionByPeerId(peerId: string): MediationProtocol {
+    private getConnectionByPeerId(peerId: string): MediationProtocol | undefined {
         const peerConnector = this.peerConnectorsWithId.get(peerId);
         if (peerConnector != null) {
             return peerConnector.getConnection();
         } else {
             // TODO: Signal to other mediator
-            throw new Error("peerConnector is null");
+            //throw new Error("peerConnector is null");
+            return undefined;
         }
     }
 

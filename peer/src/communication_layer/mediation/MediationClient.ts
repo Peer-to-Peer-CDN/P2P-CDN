@@ -25,6 +25,9 @@ export class MediationClient implements IMediationClient{
 
     private onPeers(full_hash: string, peerList: string[]) {
         peerList?.forEach(peer => {
+            if(peer === this.peerId) { //TODO test if branch!!
+                return;
+            }
             let rtc = new SimplePeer({initiator: true});
             if(!this.RTCs.get(peer)) {
                 this.RTCs.set(peer, rtc);
