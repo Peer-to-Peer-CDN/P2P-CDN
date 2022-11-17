@@ -1,4 +1,5 @@
 /.idea/
+/.vs/
 */node_modules/
 */out/
 */.vscode/
