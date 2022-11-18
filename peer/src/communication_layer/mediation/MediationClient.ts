@@ -28,23 +28,26 @@ export class MediationClient implements IMediationClient{
             if(peer === this.peerId) { //TODO test if branch!!
                 return;
             }
-            let rtc = new SimplePeer({initiator: true});
+            let rtc = new SimplePeer({initiator: true, config: { iceServers: [{urls: 'stun.l.google.com:19302'}]}});
             if(!this.RTCs.get(peer)) {
                 this.RTCs.set(peer, rtc);
             }
             rtc.on('connect', () => {
+                console.log("connected");
                 this.addPeer(full_hash, rtc, true);
             });
             rtc.on('signal', (data:any) => {
+                console.log("now signaling");
                 this.protocol.signal(full_hash, peer, JSON.stringify(data));
             });
         });
     }
 
     private onSignal(full_hash: string, senderPeer:string, signalData:string) {
+        console.log("REMOVE, received signal", senderPeer);
         let rtc = this.RTCs.get(senderPeer);
         if(!rtc) { //new peer trying to connect to us!
-            rtc = new SimplePeer({initiator: false});
+            rtc = new SimplePeer({initiator: false, config: { iceServers: [{urls: 'stun.l.google.com:19302'}]}});
             rtc.signal(JSON.parse(signalData));
             rtc.on('signal', data => {
                 this.protocol.signal(full_hash, senderPeer, JSON.stringify(data));
