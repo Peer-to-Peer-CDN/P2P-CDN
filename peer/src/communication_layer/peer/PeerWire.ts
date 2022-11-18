@@ -112,7 +112,6 @@ export class PeerWire implements IPeerWire{
     }
 
     private onPiece(index:number, offset:number, buffer: ArrayBuffer) {
-        console.log("received piece from", this.peer.peerId);
         this.torrent_data.addPiece(index, buffer);
         if(!this.peer.peerChoking) {
             setTimeout(() => this.run(), 0);
