@@ -1,5 +1,5 @@
 import { InfoDictionary } from "./common/InfoDictionary";
-import { MediationClient } from "./communication_layer/mediation/MediationClient";
+import { ICECandidate, MediationClient } from "./communication_layer/mediation/MediationClient";
 import { SwarmManager } from "./communication_layer/swarm/SwarmManager";
 import { generateFullHash, TorrentData } from "./communication_layer/swarm/TorrentData";
 import { FileIncluder } from "./user_layer/FileIncluder";
@@ -18,8 +18,14 @@ const defaultIdentityGenerator = {
 };
 
 let fileIncluder: FileIncluder;
+let iceCandidates: ICECandidate[];
+
 export function initialize(infoDictionaries: InfoDictionary[], mediatorAddress: string, mediatorPort: number) {
-    fileIncluder = new FileIncluder(infoDictionaries, mediatorAddress, mediatorPort, defaultIdentityGenerator.generateIdentity);
+    fileIncluder = new FileIncluder(infoDictionaries, mediatorAddress, mediatorPort, defaultIdentityGenerator.generateIdentity, iceCandidates);
+}
+
+export function overrrideICECandidates(candidates: ICECandidate[]) {
+    iceCandidates = candidates;
 }
 
 function checkInitializedOrError() {
@@ -77,7 +83,7 @@ class FilePackage {
     data: ArrayBuffer[];
 }
 
-const pieces_length = 10000;
+const pieces_length = 100000;
 function assembleInfoDictionary(file: File) : Promise<FilePackage> {
     let pieces_amount = file.size % pieces_length == 0 ? file.size / pieces_length : Math.floor(file.size / pieces_length) + 1;
     let info_dictionary = new InfoDictionary("", file.name, pieces_length, pieces_amount, file.size);
@@ -86,6 +92,7 @@ function assembleInfoDictionary(file: File) : Promise<FilePackage> {
         buffer.forEach(ab => {
             info_dictionary.piece_hashes.push(generateFullHash([ab]));
         });
+        console.log("pieces look like this:", buffer);
         info_dictionary.full_hash = generateFullHash(buffer);
         let fp = new FilePackage();
         fp.infoDictionary = info_dictionary;

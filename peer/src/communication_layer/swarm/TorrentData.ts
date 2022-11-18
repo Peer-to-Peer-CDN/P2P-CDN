@@ -41,7 +41,7 @@ export class TorrentData implements ITorrentData{
     private pieces : ArrayBuffer[];
     private piece_index_to_timeout_id = new Map();
     info_dictionary : InfoDictionary;
-    readonly timeout_in_ms = 500;
+    readonly timeout_in_ms = 5000;
     private number_of_complete_pieces = 0;
     private completeCallback: CompleteEvent;
     private announceCallback: AnnounceEvent;
@@ -51,6 +51,11 @@ export class TorrentData implements ITorrentData{
     constructor(info_dictionary: InfoDictionary, completeCallback: CompleteEvent, announceCallback: AnnounceEvent, pieces: ArrayBuffer[] = []) {
         this.info_dictionary = info_dictionary;
         this.pieces = pieces;
+        pieces.forEach(p => {
+            if(p) {
+                this.number_of_complete_pieces++;
+            }
+        });
         this.completeCallback = completeCallback;
         this.announceCallback = announceCallback;
         if(this.pieces.length > 0) {
@@ -85,15 +90,15 @@ export class TorrentData implements ITorrentData{
             }
         }
 
+        console.log("piece correct!", data, generateFullHash([data]));
         if(this.number_of_complete_pieces === 0) {
             this.announceCallback();
         }
 
         clearTimeout(this.piece_index_to_timeout_id.get(piece_index));
-        
+        this.pieces[piece_index]  = data;
         this.addPieceEventListeners.forEach(cb => {cb(piece_index);});
         this.number_of_complete_pieces++;
-        this.pieces[piece_index]  = data;
 
         if(this.isComplete()) {
             this.complete();
@@ -104,7 +109,7 @@ export class TorrentData implements ITorrentData{
         if(this.info_dictionary.full_hash === generateFullHash(this.pieces)) {
             this.completeCallback(this.pieces);
         } else {
-            console.error("Received wrong file");
+            console.error("Received wrong file", this.info_dictionary.full_hash, "vs", generateFullHash(this.pieces));
         }
     }
 

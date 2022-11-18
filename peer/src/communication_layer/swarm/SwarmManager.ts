@@ -8,7 +8,7 @@ export type PeerWireFactory = (td: ITorrentData, closedCallback: () => void) => 
 
 export class SwarmManager {
     private swarm : any[];
-    private torrent_data;
+    private torrent_data: TorrentData;
 
     constructor(info_dictionary : InfoDictionary, mediation_client: IMediationClient, completeCallback: CompleteEvent, torrentData? : TorrentData) {
         this.swarm = [];
@@ -20,7 +20,8 @@ export class SwarmManager {
             });
         }
         mediation_client.registerForPeers(info_dictionary.full_hash , this.handleAddPeerEvent.bind(this));
-        if(! torrentData?.isComplete()) { //TODO: test
+        if(! this.torrent_data.isComplete()) { //TODO: test
+            console.log("starting incomplete");
             mediation_client.requestPeers(this.torrent_data.info_dictionary.full_hash);
         }
     }
@@ -32,7 +33,7 @@ export class SwarmManager {
         let peer = peerWireFactory(this.torrent_data, () => {
             this.swarm.filter(p => p !== peer); //TODO: test very much or even remove if unnecessary!!
         });
-        this.torrent_data.addPieceEventListeners.push(idx => peer.onNewPiece.apply(peer, [idx]));
+        this.torrent_data.addPieceEventListeners.push((idx: any) => peer.onNewPiece.apply(peer, [idx]));
         this.swarm.push(peer);
     }
 }

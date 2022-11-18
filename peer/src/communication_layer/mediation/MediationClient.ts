@@ -6,15 +6,19 @@ import {ConnectionType, MediationProtocol} from "../../../../common/MediationPro
 var io = require('socket.io-client');
 import SimplePeer from "simple-peer";
 
+export type ICECandidate = {urls: string, username?: string, credential?:string};
 export class MediationClient implements IMediationClient{
     private add_peer_event_handlers = new Map<string, MediationEventHandler>(); //full_hash => peer_event_handler()
     private protocol: MediationProtocol; 
     private peerId;
     private RTCs : Map<string, SimplePeer.Instance> = new Map(); //map peerId to SimplePeers instances
 
-    private iceServer = [{urls: 'turn:staticauth.openrelay.metered.ca:80?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject'}];
+    private iceServers: ICECandidate[] = [{urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject'}, {urls: 'stun:openrelay.metered.ca:80'}];
 
-    constructor(peerId: string, socketFactory: any, establishedcallback?: any) { //socketFactory = () => any;
+    constructor(peerId: string, socketFactory: any, establishedcallback?: any, iceCandidates?: ICECandidate[]) { //socketFactory = () => any;
+        if(iceCandidates) {
+            this.iceServers = iceCandidates;
+        }
         const socket = socketFactory()
         this.protocol = new MediationProtocol(socket);
         this.peerId = peerId;
@@ -30,7 +34,7 @@ export class MediationClient implements IMediationClient{
             if(peer === this.peerId) { //TODO test if branch!!
                 return;
             }
-            let rtc = new SimplePeer({initiator: true, config: { iceServers: this.iceServer}});
+            let rtc = new SimplePeer({initiator: true, config: { iceServers: this.iceServers}});
             if(!this.RTCs.get(peer)) {
                 this.RTCs.set(peer, rtc);
             }
@@ -49,7 +53,7 @@ export class MediationClient implements IMediationClient{
         console.log("REMOVE, received signal", senderPeer);
         let rtc = this.RTCs.get(senderPeer);
         if(!rtc) { //new peer trying to connect to us!
-            rtc = new SimplePeer({initiator: false, config: { iceServers: this.iceServer}});
+            rtc = new SimplePeer({initiator: false, config: { iceServers: this.iceServers}});
             rtc.signal(JSON.parse(signalData));
             rtc.on('signal', data => {
                 this.protocol.signal(full_hash, senderPeer, JSON.stringify(data));

@@ -97,6 +97,7 @@ export class PeerWire implements IPeerWire{
             info.total_length % info.pieces_length :
             info.pieces_length;
         
+        this.peer.unchoke();
         if(!this.peer.peerChoking) {
  //           setTimeout(() => { //TODO REMOVE
 
@@ -114,7 +115,10 @@ export class PeerWire implements IPeerWire{
         console.log("received piece from", this.peer.peerId);
         this.torrent_data.addPiece(index, buffer);
         if(!this.peer.peerChoking) {
-            this.run(); 
+            setTimeout(() => this.run(), 0);
+            setTimeout(() => this.run(), 0);
+            setTimeout(() => this.run(), 0);
+            //this.run(); 
         }
     } 
 

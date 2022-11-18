@@ -1,5 +1,5 @@
 import { InfoDictionary } from "../common/InfoDictionary";
-import { MediationClient } from "../communication_layer/mediation/MediationClient";
+import { ICECandidate, MediationClient } from "../communication_layer/mediation/MediationClient";
 import { CompleteEvent } from "../communication_layer/swarm/ITorrentData";
 import { SwarmManager } from "../communication_layer/swarm/SwarmManager";
 import { TorrentManager } from "../communication_layer/TorrentManager";
@@ -11,11 +11,11 @@ export class FileIncluder {
     mediationClient : MediationClient;
     peerId: string;
 
-    constructor(torrents: InfoDictionary[], mediatorAddress: string, mediatorPort: number, identityGenerator:any) {
+    constructor(torrents: InfoDictionary[], mediatorAddress: string, mediatorPort: number, identityGenerator:any, iceCandidates?: ICECandidate[]) {
         this.peerId = identityGenerator();
         this.torrentManager = new TorrentManager();
         this.torrents = torrents;
-        this.mediationClient = new MediationClient(this.peerId, () => io(`ws://${mediatorAddress}:${mediatorPort}`)); 
+        this.mediationClient = new MediationClient(this.peerId, () => io(`ws://${mediatorAddress}:${mediatorPort}`), () => {}, iceCandidates); 
     }
 
     includeDownload(cssString: string, fileName:string) {
