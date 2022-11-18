@@ -43,10 +43,8 @@ export class MediationServer {
 
                 socket.on('disconnect', () => {
                     console.log("disconnect");
-                    console.log(this.peerConnectorsWithId);
                     // TODO: Delete all peer ids from fullHashesWithPeerIds
                     this.peerConnectorsWithId.delete(peerId);
-                    console.log(this.peerConnectorsWithId);
                 });
             });
         });

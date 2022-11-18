@@ -12,6 +12,8 @@ export class MediationClient implements IMediationClient{
     private peerId;
     private RTCs : Map<string, SimplePeer.Instance> = new Map(); //map peerId to SimplePeers instances
 
+    private iceServer = [{urls: 'turn:staticauth.openrelay.metered.ca:80?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject'}];
+
     constructor(peerId: string, socketFactory: any, establishedcallback?: any) { //socketFactory = () => any;
         const socket = socketFactory()
         this.protocol = new MediationProtocol(socket);
@@ -28,7 +30,7 @@ export class MediationClient implements IMediationClient{
             if(peer === this.peerId) { //TODO test if branch!!
                 return;
             }
-            let rtc = new SimplePeer({initiator: true, config: { iceServers: [{urls: 'stun.l.google.com:19302'}]}});
+            let rtc = new SimplePeer({initiator: true, config: { iceServers: this.iceServer}});
             if(!this.RTCs.get(peer)) {
                 this.RTCs.set(peer, rtc);
             }
@@ -47,7 +49,7 @@ export class MediationClient implements IMediationClient{
         console.log("REMOVE, received signal", senderPeer);
         let rtc = this.RTCs.get(senderPeer);
         if(!rtc) { //new peer trying to connect to us!
-            rtc = new SimplePeer({initiator: false, config: { iceServers: [{urls: 'stun.l.google.com:19302'}]}});
+            rtc = new SimplePeer({initiator: false, config: { iceServers: this.iceServer}});
             rtc.signal(JSON.parse(signalData));
             rtc.on('signal', data => {
                 this.protocol.signal(full_hash, senderPeer, JSON.stringify(data));

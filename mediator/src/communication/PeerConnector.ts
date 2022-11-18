@@ -27,9 +27,11 @@ export class PeerConnector implements IMediationSemantic {
     }
 
     public onSignal(full_hash:string, receiverPeerId: string, signalData: string) {
+        console.log("received signal for", receiverPeerId, "from", this.peerId);
         const targetMediation = this.getConnectionByPeerId(receiverPeerId);
 
         if (targetMediation != null) {
+            console.log("sending signal to", receiverPeerId, "for ", this.peerId);
             targetMediation.signal(full_hash, this.peerId, signalData);
         }
     }
