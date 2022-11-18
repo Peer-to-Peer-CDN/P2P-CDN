@@ -77,12 +77,15 @@ class FilePackage {
     data: ArrayBuffer[];
 }
 
-const pieces_length = 1000;
+const pieces_length = 10000;
 function assembleInfoDictionary(file: File) : Promise<FilePackage> {
     let pieces_amount = file.size % pieces_length == 0 ? file.size / pieces_length : Math.floor(file.size / pieces_length) + 1;
     let info_dictionary = new InfoDictionary("", file.name, pieces_length, pieces_amount, file.size);
     let aba = generateArrayBufferArray(info_dictionary, file);
     return aba.then(buffer => {
+        buffer.forEach(ab => {
+            info_dictionary.piece_hashes.push(generateFullHash([ab]));
+        });
         info_dictionary.full_hash = generateFullHash(buffer);
         let fp = new FilePackage();
         fp.infoDictionary = info_dictionary;

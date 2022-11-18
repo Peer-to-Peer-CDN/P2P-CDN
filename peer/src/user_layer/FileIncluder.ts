@@ -55,12 +55,13 @@ export class FileIncluder {
 
     private fetchFile(fileName: string, callback: (file: File) => void) {
         let dict = this.torrents.find(dict => dict.file_name === fileName);
-        console.log(this.torrents, "!");
         if(!dict) {
             console.error("Configuration does not contain a file called", fileName);
             return;
         }
-        this.torrentManager.addTorrent(dict, (complete: CompleteEvent) => new SwarmManager(dict!, this.mediationClient, complete), callback);
+        let startTime = performance.now();
+        this.torrentManager.addTorrent(dict, (complete: CompleteEvent) => new SwarmManager(dict!, this.mediationClient, complete), (file) => {
+            callback(file); console.log("performance: ", performance.now() - startTime)});
     }
 
     private loadElementOrError(cssString: string) : Element {

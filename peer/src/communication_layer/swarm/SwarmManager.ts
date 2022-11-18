@@ -4,7 +4,7 @@ import { IMediationClient } from "../mediation/IMediationClient";
 import { TorrentData } from "./TorrentData";
 
 
-export type PeerWireFactory = (td: ITorrentData) => any;
+export type PeerWireFactory = (td: ITorrentData, closedCallback: () => void) => any;
 
 export class SwarmManager {
     private swarm : any[];
@@ -29,7 +29,9 @@ export class SwarmManager {
         return this.swarm.length;
     }
     private handleAddPeerEvent(peerWireFactory: PeerWireFactory) {
-        let peer = peerWireFactory(this.torrent_data);
+        let peer = peerWireFactory(this.torrent_data, () => {
+            this.swarm.filter(p => p !== peer); //TODO: test very much or even remove if unnecessary!!
+        });
         this.torrent_data.addPieceEventListeners.push(idx => peer.onNewPiece.apply(peer, [idx]));
         this.swarm.push(peer);
     }

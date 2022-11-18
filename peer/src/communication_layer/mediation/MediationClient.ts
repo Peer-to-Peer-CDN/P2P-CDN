@@ -77,8 +77,8 @@ export class MediationClient implements IMediationClient{
     private addPeer(full_hash: string, rtc: IP2PTransport, initiator: boolean) {
         let cb = this.add_peer_event_handlers.get(full_hash)
         if(cb) {
-            cb((torrent_data: ITorrentData) => {
-                return new PeerWire(rtc, torrent_data, initiator, this.peerId);
+            cb((torrent_data: ITorrentData, closedCallback: () => void) => {
+                return new PeerWire(rtc, torrent_data, initiator, this.peerId, closedCallback);
             });
         }
     }

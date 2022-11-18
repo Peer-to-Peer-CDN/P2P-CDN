@@ -8,13 +8,32 @@
     <script defer>
         window.addEventListener('load', () => {
             let id = {
-                    "full_hash": "3c1107c6b63cf932f14f13b44a651a42c5ba0919",
-                    "file_name": "288.png",
-                    "pieces_length": 1000,
-                    "pieces_amount": 180,
-                    "total_length": 179334,
-                    "piece_hashes": []
-                };
+                "full_hash": "cdb93a896914bfee43d0f7a6975fb190f30ca0d2",
+                "file_name": "288.png",
+                "pieces_length": 10000,
+                "pieces_amount": 18,
+                "total_length": 179334,
+                "piece_hashes": [
+                    "51d3dc89accbf11f187f5f9378b465c98c49aca6",
+                    "8c6d3830ce7496414e544c145caf208c99532d13",
+                    "dfb9fceb482be0efeecbb1ade5757f8426895b72",
+                    "6ad86ccfa19421fb0af4e16d630845925bba4e6e",
+                    "f1bc44e72230ed4147179c5fd6094c98b7079d2e",
+                    "038e5bad5d0b88a85aa138db89a294722c916098",
+                    "2ef843eae26f976a39ee400bef10709f13a74a5f",
+                    "b14849302a69053a7cd8bca0556b55c2963287be",
+                    "f0b6e3eae8c8190df6d3fe1448a7adcb1af2a5e2",
+                    "d5d65653adcf49197603a1981b9737d98b6ce093",
+                    "178ede8fab283f98fce2ed0dd0ef246f0058f82c",
+                    "96fe321883209047b78780ffd136c752cf9d74af",
+                    "7a730001a59a993ccfb7c16555b2f1283967aa29",
+                    "9fc28f7417d158de31d94ab60d64a2c094cb7d95",
+                    "2b893a61a20c3a74464ef737e18663cf69e40afc",
+                    "c5cabc94e6d1d14a87d6f2d5628455f18a8851c2",
+                    "90f34ac802afcf83a987c5564f483507a96d1ddc",
+                    "3f0e7d0814f6d8deaaed94b4e339c05317e7976a"
+                ]
+            }; 
             cdn.initialize([id], "localhost", 8888);
             cdn.includeDownloads(
                 ["288.png"],

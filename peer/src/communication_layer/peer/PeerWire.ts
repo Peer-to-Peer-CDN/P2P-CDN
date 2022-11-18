@@ -12,8 +12,9 @@ export class PeerWire implements IPeerWire{
     private peer: any;
     private readonly no_pieces_timeout: number = 500;
     private no_pieces_timeout_token: any;
+    private isClosed: boolean = false;
 
-    constructor(stream: IP2PTransport, torrent_data: ITorrentData, initiator: boolean, peerId: string) {
+    constructor(stream: IP2PTransport, torrent_data: ITorrentData, initiator: boolean, peerId: string, closedCallback: () => void) {
         this.torrent_data = torrent_data;
         this.peer = new BittorrentProtocol();
         stream.pipe(this.peer).pipe(stream);
@@ -21,6 +22,11 @@ export class PeerWire implements IPeerWire{
         if(initiator) {
             this.peer.handshake(torrent_data.info_dictionary.full_hash, peerId);
         }
+
+        stream.on('close', () => {
+            this.isClosed = true;
+            closedCallback();
+        });
 
         this.peer.on('handshake', (infoHash: any, peerIdRec:any, _f:any) => {
             if(this.torrent_data.info_dictionary.full_hash != infoHash) {
@@ -59,7 +65,7 @@ export class PeerWire implements IPeerWire{
     }
 
     private run() {
-        if(this.torrent_data.isComplete()) {
+        if(this.torrent_data.isComplete() || this.isClosed) {
             return;
         }
         if(!this.choosePieceAndRequestOnFound()) {
@@ -91,17 +97,21 @@ export class PeerWire implements IPeerWire{
             info.total_length % info.pieces_length :
             info.pieces_length;
         
-        this.peer.unchoke()
         if(!this.peer.peerChoking) {
+ //           setTimeout(() => { //TODO REMOVE
+
             this.peer.request(index, 0, piece_length, (err: Error) => {
                 if(err) {
                     console.error(err);
                 }
             });
+
+//            }, 300); //TODO REMOVE
         }
     }
 
     private onPiece(index:number, offset:number, buffer: ArrayBuffer) {
+        console.log("received piece from", this.peer.peerId);
         this.torrent_data.addPiece(index, buffer);
         if(!this.peer.peerChoking) {
             this.run(); 
