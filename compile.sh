@@ -1,5 +1,5 @@
 cd mediator
-tsc --project tsconfig.json --outDir out
+tsc --project tsconfig.json --outDir out &
 cd ..
 cd peer
 tsc --project tsconfig.json --outDir out/peer
