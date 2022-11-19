@@ -12,7 +12,8 @@ export class PeerWire implements IPeerWire{
     private peer: any;
     private readonly no_pieces_timeout: number = 500;
     private no_pieces_timeout_token: any;
-    private isClosed: boolean = false;
+    public isClosed: boolean = false;
+    private partnerPeerId: string;
 
     constructor(stream: IP2PTransport, torrent_data: ITorrentData, initiator: boolean, peerId: string, closedCallback: () => void) {
         this.torrent_data = torrent_data;
@@ -24,12 +25,20 @@ export class PeerWire implements IPeerWire{
         }
 
         stream.on('close', () => {
+            console.log("connection closed on ", this.partnerPeerId)
+            this.isClosed = true;
+            closedCallback();
+        });
+
+        stream.on('error', () => {
+            console.log("an error occured with", this.partnerPeerId);
             this.isClosed = true;
             closedCallback();
         });
 
         this.peer.on('handshake', (infoHash: any, peerIdRec:any, _f:any) => {
-            if(this.torrent_data.info_dictionary.full_hash != infoHash) {
+            this.partnerPeerId = peerIdRec;
+            if(this.torrent_data.info_dictionary.full_hash !== infoHash) {
                 this.peer.destroy();
                 stream.destroy();
                 console.error("Error: Handshake failed because of a infoHash mismatch");
@@ -38,16 +47,29 @@ export class PeerWire implements IPeerWire{
             if(!initiator) {
                 this.peer.handshake(torrent_data.info_dictionary.full_hash, peerId);
             }
-            let haveField = this.torrent_data.getHaveField();
-            let bitfield = new BitField(this.torrent_data.info_dictionary.pieces_amount);
-            for(let i = 0; i < haveField.length; i++) {
-                if(haveField[i]) {bitfield.set(i);}
+
+            if(initiator) {
+                this.sendBitField();
             }
-            this.peer.bitfield(bitfield);
+        });
+        this.peer.on('bitfield', () => {
+            if(!initiator) {
+                this.sendBitField();
+            }
+            this.peer.unchoke();
+            this.peer.interested();
         });
         this.registerHandlers();
     }
 
+    private sendBitField() {
+        let haveField = this.torrent_data.getHaveField();
+        let bitfield = new BitField(this.torrent_data.info_dictionary.pieces_amount);
+        for(let i = 0; i < haveField.length; i++) {
+            if(haveField[i]) {bitfield.set(i);}
+        }
+        this.peer.bitfield(bitfield);
+    }
     onNewPiece(index: number) {
         this.peer.have(index);
     }
@@ -58,7 +80,6 @@ export class PeerWire implements IPeerWire{
         this.peer.on('unchoke', (...args:any[]) => this.onUnchoke.apply(this, args)); 
         this.peer.on('interested',  (...args:any[]) => this.onInterested.apply(this, args));
         this.peer.on('uninterested', (...args:any[]) => this.onUninterested.apply(this,args));
-        this.peer.on('bitfield', (...args:any[]) => this.onBitfield.apply(this,args));
         this.peer.on('have', (...args:any[]) => this.onHave.apply(this,args));
         this.peer.on('request', (...args:any[]) => this.onRequest.apply(this,args));
 
@@ -99,7 +120,7 @@ export class PeerWire implements IPeerWire{
         
         this.peer.unchoke();
         if(!this.peer.peerChoking) {
- //           setTimeout(() => { //TODO REMOVE
+           //setTimeout(() => { //TODO REMOVE
 
             this.peer.request(index, 0, piece_length, (err: Error) => {
                 if(err) {
@@ -107,17 +128,14 @@ export class PeerWire implements IPeerWire{
                 }
             });
 
-//            }, 300); //TODO REMOVE
+           //}, 200); //TODO REMOVE
         }
     }
 
     private onPiece(index:number, offset:number, buffer: ArrayBuffer) {
         this.torrent_data.addPiece(index, buffer);
         if(!this.peer.peerChoking) {
-            setTimeout(() => this.run(), 0);
-            setTimeout(() => this.run(), 0);
-            setTimeout(() => this.run(), 0);
-            //this.run(); 
+            this.run();
         }
     } 
 
@@ -135,11 +153,6 @@ export class PeerWire implements IPeerWire{
 
     private onUninterested() {
 
-    }
-
-    private onBitfield(bitfield : any) { //bitfield supports .get(index) : boolean
-        this.peer.unchoke();
-        this.peer.interested();
     }
 
     private onHave(piece_index : number) {
