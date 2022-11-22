@@ -1,27 +1,19 @@
+import { IIdentityGenerator } from "../../common/IIdentityGenerator"
+import { DefaultIdentityGenerator } from "../../common/DefaultIdentityGenerator"
 import { InfoDictionary } from "./common/InfoDictionary";
 import { ICECandidate, MediationClient } from "./communication_layer/mediation/MediationClient";
 import { SwarmManager } from "./communication_layer/swarm/SwarmManager";
 import { generateFullHash, TorrentData } from "./communication_layer/swarm/TorrentData";
 import { FileIncluder } from "./user_layer/FileIncluder";
 import {io} from 'socket.io-client';
-var crypto = require('crypto');
 
-
-const defaultIdentityGenerator = {
-    generateIdentity() {
-                var shasum = crypto.createHash('sha1');
-                shasum.update((Math.random() * 1000).toString());
-                let id:string = shasum.digest('hex');
-                console.log(id);
-                return id;
-            }
-};
+const identityGenerator: IIdentityGenerator = new DefaultIdentityGenerator();
 
 let fileIncluder: FileIncluder;
 let iceCandidates: ICECandidate[];
 
 export function initialize(infoDictionaries: InfoDictionary[], mediatorAddress: string, mediatorPort: number) {
-    fileIncluder = new FileIncluder(infoDictionaries, mediatorAddress, mediatorPort, defaultIdentityGenerator.generateIdentity, iceCandidates);
+    fileIncluder = new FileIncluder(infoDictionaries, mediatorAddress, mediatorPort, identityGenerator.generateIdentity(), iceCandidates);
 }
 
 export function overrrideICECandidates(candidates: ICECandidate[]) {
@@ -55,7 +47,7 @@ export function seedFile(file: File, mediatorAddress:string, mediatorPort: numbe
     assembleInfoDictionary(file).then(fp => {
         console.log("Seeding file: ", fp.infoDictionary);
         let torrentData = new TorrentData(fp.infoDictionary, () => {}, () => {}, fp.data);
-        let mc = new MediationClient(defaultIdentityGenerator.generateIdentity(), () => io(`ws://${mediatorAddress}:${mediatorPort}`));
+        let mc = new MediationClient(identityGenerator.generateIdentity(), () => io(`ws://${mediatorAddress}:${mediatorPort}`));
         let sm = new SwarmManager(fp.infoDictionary, mc, () => {}, torrentData);
         mc.announce(fp.infoDictionary.full_hash);
     });
