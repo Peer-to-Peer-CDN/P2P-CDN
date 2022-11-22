@@ -7,11 +7,14 @@
     <script src="cdn.js"></script>
     <script type="text/JavaScript"defer>
         window.addEventListener("load", () => {
+            const serverUrl = "localhost";
+            const serverPort = 8888;
+
             let fileInput = document.querySelector("#fileInput");
 
             fileInput.addEventListener("change", () => {
                 let file = fileInput.files[0];
-                cdn.seedFile(file, "localhost", 8888);
+                cdn.seedFile(file, serverUrl, serverPort);
             },false);
         });
         

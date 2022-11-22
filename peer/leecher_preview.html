@@ -7,6 +7,9 @@
     <script src="cdn.js"></script>
     <script defer>
         window.addEventListener('load', () => {
+            const serverUrl = "alderaan.ch";
+            const serverPort = 8888;
+
             let id = {
     "full_hash": "0e83a8e642212db77a31f0f4a26242f7b504b4e0",
     "file_name": "G04_MediaHub.zip",
@@ -70,7 +73,7 @@
         "fb0c2795b80ea448fbcdbda1704b0f8f264189be"
     ]
 }; 
-            cdn.initialize([id], "alderaan.ch", 8888);
+            cdn.initialize([id], serverUrl, serverPort);
             cdn.includeDownloads(
                 ["G04_MediaHub.zip"],
                 [".test"],
