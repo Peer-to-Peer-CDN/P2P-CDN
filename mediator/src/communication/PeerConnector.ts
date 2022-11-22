@@ -1,4 +1,4 @@
-import {MediationProtocol} from "../../../common/MediationProtocol";
+import {ConnectionType, MediationProtocol} from "../../../common/MediationProtocol";
 import {IMediationSemantic} from "./IMediationSemantic";
 
 export class PeerConnector implements IMediationSemantic {
@@ -17,22 +17,22 @@ export class PeerConnector implements IMediationSemantic {
     }
 
     public onGetPeers(fullHash: string) {
-        console.log("getting peers", fullHash, this.peerId);
-        const peerIds = this.getPeerIdsByFullHash(fullHash).filter((peerId: string) => peerId != this.peerId);
+        console.log("getting peers (PeerConnector)", fullHash, this.peerId);
+        const peerIds = this.getPeerIdsByFullHash(fullHash, ConnectionType.MEDIATION).filter((peerId: string) => peerId != this.peerId);
         this.mediation.peers(fullHash, peerIds);
     }
 
-    public onPeers(fullHash: string) {
+    public onPeers(fullHash: string, peerList: string[]) {
         // Do nothing, because case 'peer sends list of peers to mediator' is not supported
     }
 
-    public onSignal(full_hash:string, receiverPeerId: string, signalData: string) {
+    public onSignal(fullHash: string, receiverPeerId: string, signalData: string) {
         console.log("received signal for", receiverPeerId, "from", this.peerId);
         const targetMediation = this.getConnectionByPeerId(receiverPeerId);
 
         if (targetMediation != null) {
             console.log("sending signal to", receiverPeerId, "for ", this.peerId);
-            targetMediation.signal(full_hash, this.peerId, signalData);
+            targetMediation.signal(fullHash, this.peerId, signalData);
         }
     }
 
