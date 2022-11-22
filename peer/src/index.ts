@@ -13,7 +13,7 @@ let fileIncluder: FileIncluder;
 let iceCandidates: ICECandidate[];
 
 export function initialize(infoDictionaries: InfoDictionary[], mediatorAddress: string, mediatorPort: number) {
-    fileIncluder = new FileIncluder(infoDictionaries, mediatorAddress, mediatorPort, identityGenerator.generateIdentity(), iceCandidates);
+    fileIncluder = new FileIncluder(infoDictionaries, mediatorAddress, mediatorPort, () => identityGenerator.generateIdentity(), iceCandidates);
 }
 
 export function overrrideICECandidates(candidates: ICECandidate[]) {
