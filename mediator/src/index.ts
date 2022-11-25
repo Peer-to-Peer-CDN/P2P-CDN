@@ -20,7 +20,7 @@ setTimeout(() => {
 
 /*
  ***** Example for mediator to mediator communication *****
- */
+ *
 let socket1: any;
 let socket2: any;
 
@@ -50,6 +50,8 @@ setTimeout(() => {
         });
     }, 100);
 }, 100);
+*/
+
 
 
 
