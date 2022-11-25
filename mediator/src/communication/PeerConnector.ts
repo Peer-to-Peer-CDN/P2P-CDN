@@ -18,7 +18,7 @@ export class PeerConnector implements IMediationSemantic {
 
     public onGetPeers(fullHash: string) {
         console.log("getting peers (PeerConnector)", fullHash, this.peerId);
-        const peerIds = this.getPeerIdsByFullHash(fullHash, ConnectionType.MEDIATION).filter((peerId: string) => peerId != this.peerId);
+        const peerIds = this.getPeerIdsByFullHash(fullHash, ConnectionType.MEDIATION, this.mediation).filter((peerId: string) => peerId != this.peerId);
         this.mediation.peers(fullHash, peerIds);
     }
 

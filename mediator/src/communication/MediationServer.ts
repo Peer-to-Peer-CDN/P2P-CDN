@@ -1,34 +1,44 @@
 import {Server} from "socket.io";
 import {ConnectionType, MediationProtocol} from "../../../common/MediationProtocol";
+import {IIdentityGenerator} from "../../../common/IIdentityGenerator";
+import {DefaultIdentityGenerator} from "../../../common/DefaultIdentityGenerator";
 import {PeerConnector} from "./PeerConnector";
 import {IMediationSemantic} from "./IMediationSemantic";
+import {MediationReplicator} from "./MediationReplicator";
 
 export class MediationServer {
+    private readonly mediatorId: string;
     private server: Server;
+    private mediationReplicator: MediationReplicator;
     private fullHashesWithPeerIds: Map<string, string[]> = new Map(); // fullHash, peerIds
-    private peerConnectorsWithId: Map<string, IMediationSemantic> = new Map(); // peerId, PeerConnector
+    private peerConnectorsWithId: Map<string, IMediationSemantic> = new Map(); // id, PeerConnector
+    private mediationConnectorWithId: Map<string, IMediationSemantic> = new Map(); // id, MediationConnector
 
-    constructor(server: Server) {
+    constructor(server: Server, identityGenerator?: IIdentityGenerator) {
         this.server = server;
+        this.mediationReplicator = new MediationReplicator((...args: any[]) => this.getPeerIdsByFullHash.apply(this, args));
+        this.mediatorId = identityGenerator?.generateIdentity() ?? new DefaultIdentityGenerator().generateIdentity();
     }
 
     public run() {
         this.server.on('connection', (socket) => {
             const mediation = new MediationProtocol(socket);
 
-            mediation.on('handshake', (peerId, connectionType) => {
+            mediation.on('handshake', (id, connectionType) => {
                 let semantic: IMediationSemantic;
 
                 if (connectionType == ConnectionType.MEDIATION) {
                     semantic = new PeerConnector(
-                        peerId,
+                        id,
                         mediation,
                         (...args: any[]) => this.getConnectionByPeerId.apply(this, args),
                         (...args: any[]) => this.getPeerIdsByFullHash.apply(this, args),
                         (...args: any[]) => this.updatePeerIds.apply(this, args));
-                    this.peerConnectorsWithId.set(peerId, semantic);
+                    this.peerConnectorsWithId.set(id, semantic);
                 } else if (connectionType == ConnectionType.REPLICATION) {
-                    // TODO: MediationReplication
+                    semantic = this.mediationReplicator.createMediationConnector(id, mediation);
+                    console.log("connection replication " + id + " on mediator " + this.mediatorId);
+                    this.mediationConnectorWithId.set(id, semantic);
                 } else {
                     return;
                 }
@@ -44,19 +54,24 @@ export class MediationServer {
                 socket.on('disconnect', () => {
                     console.log("disconnect");
                     // TODO: Delete all peer ids from fullHashesWithPeerIds
-                    this.peerConnectorsWithId.delete(peerId);
+                    this.peerConnectorsWithId.delete(id);
                 });
             });
         });
     }
 
-    private getPeerIdsByFullHash(fullHash: string): string[] {
+    private getPeerIdsByFullHash(fullHash: string, connectionType?: ConnectionType, mediation?: MediationProtocol): string[] {
         const peerIds = this.fullHashesWithPeerIds.get(fullHash);
-        if (peerIds != null) {
-            return peerIds;
+
+        if (peerIds == null && connectionType == ConnectionType.MEDIATION) {
+            if (mediation) {
+                this.mediationReplicator.getPeersFromOtherMediator(fullHash, this.mediatorId, mediation); // Callback
+            } else {
+                console.log("undefined");
+            }
         }
 
-        return [];
+        return peerIds == null ? [] : peerIds;
     }
 
     private getConnectionByPeerId(peerId: string): MediationProtocol | undefined {
@@ -64,8 +79,6 @@ export class MediationServer {
         if (peerConnector != null) {
             return peerConnector.getConnection();
         } else {
-            // TODO: Signal to other mediator
-            //throw new Error("peerConnector is null");
             return undefined;
         }
     }
@@ -82,6 +95,7 @@ export class MediationServer {
         let peerIds = this.getPeerIdsByFullHash(fullHash);
         peerIds.push(peerId);
         this.fullHashesWithPeerIds.set(fullHash, peerIds);
+        // TODO: DHT_announce(peerId, fullHash);
     }
 
     private removePeerId(fullHash: string, peerId: string) {
@@ -92,6 +106,7 @@ export class MediationServer {
             this.fullHashesWithPeerIds.set(fullHash, peerIds);
         } else {
             this.fullHashesWithPeerIds.delete(fullHash);
+            // TODO: DHT_finish(peerId, fullHash);
         }
     }
 }
