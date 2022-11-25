@@ -12,11 +12,12 @@ export class MediationServer {
     private mediationReplicator: MediationReplicator;
     private fullHashesWithPeerIds: Map<string, string[]> = new Map(); // fullHash, peerIds
     private peerConnectorsWithId: Map<string, IMediationSemantic> = new Map(); // id, PeerConnector
-    private mediationConnectorWithId: Map<string, IMediationSemantic> = new Map(); // id, MediationConnector
 
     constructor(server: Server, identityGenerator?: IIdentityGenerator) {
         this.server = server;
-        this.mediationReplicator = new MediationReplicator((...args: any[]) => this.getPeerIdsByFullHash.apply(this, args));
+        this.mediationReplicator = new MediationReplicator(
+            (...args: any[]) => this.getPeerIdsByFullHash.apply(this, args),
+            (...args: any[]) => this.getConnectionByPeerId.apply(this, args));
         this.mediatorId = identityGenerator?.generateIdentity() ?? new DefaultIdentityGenerator().generateIdentity();
     }
 
@@ -36,9 +37,8 @@ export class MediationServer {
                         (...args: any[]) => this.updatePeerIds.apply(this, args));
                     this.peerConnectorsWithId.set(id, semantic);
                 } else if (connectionType == ConnectionType.REPLICATION) {
-                    semantic = this.mediationReplicator.createMediationConnector(id, mediation);
+                    semantic = this.mediationReplicator.createMediationConnector(mediation);
                     console.log("connection replication " + id + " on mediator " + this.mediatorId);
-                    this.mediationConnectorWithId.set(id, semantic);
                 } else {
                     return;
                 }
@@ -60,15 +60,11 @@ export class MediationServer {
         });
     }
 
-    private getPeerIdsByFullHash(fullHash: string, connectionType?: ConnectionType, mediation?: MediationProtocol): string[] {
+    private getPeerIdsByFullHash(fullHash: string, connectionType?: ConnectionType, initiatorPeerId?: string): string[] {
         const peerIds = this.fullHashesWithPeerIds.get(fullHash);
 
-        if (peerIds == null && connectionType == ConnectionType.MEDIATION) {
-            if (mediation) {
-                this.mediationReplicator.getPeersFromOtherMediator(fullHash, this.mediatorId, mediation); // Callback
-            } else {
-                console.log("undefined");
-            }
+        if (peerIds == null && connectionType == ConnectionType.MEDIATION && initiatorPeerId) {
+            this.mediationReplicator.getPeersFromOtherMediator(fullHash, this.mediatorId, initiatorPeerId); // Callback
         }
 
         return peerIds == null ? [] : peerIds;

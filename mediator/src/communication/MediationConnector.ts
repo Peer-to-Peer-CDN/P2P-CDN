@@ -2,34 +2,33 @@ import {MediationProtocol} from "../../../common/MediationProtocol";
 import {IMediationSemantic} from "./IMediationSemantic";
 
 export class MediationConnector implements IMediationSemantic {
-    private readonly mediatorId: string;
     private readonly mediation: MediationProtocol;
+    private readonly initiatorPeerId: string;
     private readonly getPeerIdsByFullHash: Function;
-    private readonly initiatorMediation: MediationProtocol | undefined;
+    private readonly getConnectionByPeerId: Function;
 
-    constructor(mediatorId: string, mediation: MediationProtocol, getPeerIdsByFullHash: Function, initiatorMediation?: MediationProtocol) {
-        this.mediatorId = mediatorId; // TODO: Remove
+    constructor(mediation: MediationProtocol, getPeerIdsByFullHash: Function, getConnectionByPeerId: Function, initiatorPeerId?: string) {
         this.mediation = mediation;
         this.getPeerIdsByFullHash = getPeerIdsByFullHash;
-        this.initiatorMediation = initiatorMediation; // TODO: Use initiator peer-id instead of initiator mediation
+        this.getConnectionByPeerId = getConnectionByPeerId;
+        this.initiatorPeerId = initiatorPeerId ?? "";
     }
 
     onGetPeers(fullHash: string): void {
         const peerIds = this.getPeerIdsByFullHash(fullHash);
-        console.log("onGetPeers (MediationConnector)", fullHash, this.mediatorId, peerIds);
+        console.log("onGetPeers (MediationConnector)", fullHash, peerIds);
         this.mediation.peers(fullHash, peerIds);
     }
 
     onPeers(fullHash: string, peerList: string[]): void {
-        console.log("onPeers (MediationConnector)", fullHash, peerList, this.mediatorId);
-        if (this.initiatorMediation) {
-            this.initiatorMediation.peers(fullHash, peerList);
-        }
+        console.log("onPeers (MediationConnector)", fullHash, peerList);
+        const targetMediation = this.getConnectionByPeerId(this.initiatorPeerId);
+        targetMediation.peers(fullHash, peerList);
     }
 
     onSignal(fullHash: string, receiverPeerId: string, signalData: string): void {
-        const concatenatedPeerId = this.mediatorId + receiverPeerId; // TODO: Peer-ID A + Peer-ID B
-        this.mediation.signal(fullHash, concatenatedPeerId, signalData);
+        const concatenatedPeerId = this.initiatorPeerId + receiverPeerId; // TODO: Test (Peer-ID A + Peer-ID B)
+        this.mediation.signal(fullHash, concatenatedPeerId, signalData); // TODO: Load target mediation
     }
 
     onAnnounce(fullHash: string): void {

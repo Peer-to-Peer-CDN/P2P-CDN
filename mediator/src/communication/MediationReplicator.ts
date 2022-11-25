@@ -6,22 +6,24 @@ import {MediationConnector} from "./MediationConnector";
 
 export class MediationReplicator {
     private readonly getPeerIdsByFullHash: Function;
+    private readonly getConnectionByPeerId: Function;
 
-    constructor(getPeerIdsByFullHash: Function) { // TODO: Add getConnectionByPeerId
+    constructor(getPeerIdsByFullHash: Function, getConnectionByPeerId: Function) {
         this.getPeerIdsByFullHash = getPeerIdsByFullHash;
+        this.getConnectionByPeerId = getConnectionByPeerId;
     }
 
-    public createMediationConnector(id: string, mediation: MediationProtocol) : IMediationSemantic {
-        return new MediationConnector(id, mediation, this.getPeerIdsByFullHash);
+    public createMediationConnector(mediation: MediationProtocol) : IMediationSemantic {
+        return new MediationConnector(mediation, this.getPeerIdsByFullHash, this.getConnectionByPeerId);
     }
 
-    public getPeersFromOtherMediator(fullHash: string, initiatorId: string, initiatorMediation: MediationProtocol): void {
+    public getPeersFromOtherMediator(fullHash: string, mediatorId: string, initiatorPeerId: string): void {
         const mediatorAddress = this.getMediatorAddressFromDht(fullHash);
         const socket = io("ws://" + mediatorAddress.url);
         const mediation = new MediationProtocol(socket);
-        const semantic = new MediationConnector(initiatorId, mediation, this.getPeerIdsByFullHash, initiatorMediation)
+        const semantic = new MediationConnector(mediation, this.getPeerIdsByFullHash, this.getConnectionByPeerId, initiatorPeerId)
 
-        mediation.handshake(initiatorId, ConnectionType.REPLICATION);
+        mediation.handshake(mediatorId, ConnectionType.REPLICATION);
 
         mediation.on("established", () => {
             mediation.get_peers(fullHash);
