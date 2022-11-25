@@ -7,13 +7,15 @@ export class PeerConnector implements IMediationSemantic {
     private readonly getConnectionByPeerId: Function;
     private readonly getPeerIdsByFullHash: Function;
     private readonly updatePeerIds: Function;
+    private readonly signalOverMediationConnection: Function;
 
-    constructor(peerId: string, mediation: MediationProtocol, getConnectionByPeerId: Function, getPeerIdsByFullHash: Function, updatePeerIds: Function) {
+    constructor(peerId: string, mediation: MediationProtocol, getConnectionByPeerId: Function, getPeerIdsByFullHash: Function, updatePeerIds: Function, signalOverMediationConnection: Function) {
         this.peerId = peerId;
         this.mediation = mediation;
         this.getConnectionByPeerId = getConnectionByPeerId;
         this.getPeerIdsByFullHash = getPeerIdsByFullHash;
         this.updatePeerIds = updatePeerIds;
+        this.signalOverMediationConnection = signalOverMediationConnection;
     }
 
     public onGetPeers(fullHash: string) {
@@ -28,11 +30,15 @@ export class PeerConnector implements IMediationSemantic {
 
     public onSignal(fullHash: string, receiverPeerId: string, signalData: string) {
         console.log("received signal for", receiverPeerId, "from", this.peerId);
-        const targetMediation = this.getConnectionByPeerId(receiverPeerId);
+        const targetMediation = this.getConnectionByPeerId(receiverPeerId); // TODO: Signal over mediators
 
         if (targetMediation != null) {
             console.log("sending signal to", receiverPeerId, "for ", this.peerId);
             targetMediation.signal(fullHash, this.peerId, signalData);
+        } else {
+            console.log("sending signal over another mediator");
+            const concatenatedPeerId = this.peerId + receiverPeerId;
+            this.signalOverMediationConnection(fullHash, concatenatedPeerId, signalData);
         }
     }
 

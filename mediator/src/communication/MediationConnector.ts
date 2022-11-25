@@ -26,9 +26,12 @@ export class MediationConnector implements IMediationSemantic {
         targetMediation.peers(fullHash, peerList);
     }
 
-    onSignal(fullHash: string, receiverPeerId: string, signalData: string): void {
-        const concatenatedPeerId = this.initiatorPeerId + receiverPeerId; // TODO: Test (Peer-ID A + Peer-ID B)
-        this.mediation.signal(fullHash, concatenatedPeerId, signalData); // TODO: Load target mediation
+    onSignal(fullHash: string, concatenatedPeerId: string, signalData: string): void {
+        const initiatorPeerId = concatenatedPeerId.slice(0, 40);
+        const receiverPeerId = concatenatedPeerId.slice(40, 80);
+        const targetMediation = this.getConnectionByPeerId(receiverPeerId);
+        console.log("onSignal (MediationConnector)", fullHash, initiatorPeerId, receiverPeerId, signalData);
+        targetMediation.signal(fullHash, initiatorPeerId, signalData);
     }
 
     onAnnounce(fullHash: string): void {

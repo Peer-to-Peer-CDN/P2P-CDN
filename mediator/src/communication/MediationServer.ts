@@ -34,7 +34,8 @@ export class MediationServer {
                         mediation,
                         (...args: any[]) => this.getConnectionByPeerId.apply(this, args),
                         (...args: any[]) => this.getPeerIdsByFullHash.apply(this, args),
-                        (...args: any[]) => this.updatePeerIds.apply(this, args));
+                        (...args: any[]) => this.updatePeerIds.apply(this, args),
+                        (...args: any[]) => this.signalOverMediatorConnection.apply(this, args));
                     this.peerConnectorsWithId.set(id, semantic);
                 } else if (connectionType == ConnectionType.REPLICATION) {
                     semantic = this.mediationReplicator.createMediationConnector(mediation);
@@ -77,6 +78,10 @@ export class MediationServer {
         } else {
             return undefined;
         }
+    }
+
+    private signalOverMediatorConnection(fullHash: string, concatenatedPeerId: string, signalData: string) {
+        this.mediationReplicator.signalOverMediatorConnection(fullHash, concatenatedPeerId, signalData);
     }
 
     private updatePeerIds(fullHash: string, peerId: string, remove: boolean) {

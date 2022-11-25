@@ -7,6 +7,7 @@ import {MediationConnector} from "./MediationConnector";
 export class MediationReplicator {
     private readonly getPeerIdsByFullHash: Function;
     private readonly getConnectionByPeerId: Function;
+    private fullHashesWithMediationConnector: Map<string, IMediationSemantic> = new Map(); // fullHash, MediationConnector
 
     constructor(getPeerIdsByFullHash: Function, getConnectionByPeerId: Function) {
         this.getPeerIdsByFullHash = getPeerIdsByFullHash;
@@ -22,6 +23,7 @@ export class MediationReplicator {
         const socket = io("ws://" + mediatorAddress.url);
         const mediation = new MediationProtocol(socket);
         const semantic = new MediationConnector(mediation, this.getPeerIdsByFullHash, this.getConnectionByPeerId, initiatorPeerId)
+        this.fullHashesWithMediationConnector.set(fullHash, semantic);
 
         mediation.handshake(mediatorId, ConnectionType.REPLICATION);
 
@@ -30,6 +32,14 @@ export class MediationReplicator {
             mediation.on('peers', (...args) => semantic.onPeers.apply(semantic, args));
             mediation.on('signal', (...args) => semantic.onSignal.apply(semantic, args));
         });
+    }
+
+    public signalOverMediatorConnection(fullHash: string, receiverPeerId: string, signalData: string) {
+        const semantic = this.fullHashesWithMediationConnector.get(fullHash);
+
+        if (semantic) {
+            semantic.getConnection().signal(fullHash, receiverPeerId, signalData);
+        }
     }
 
     private getMediatorAddressFromDht(fullHash: string): MediatorAddress {
