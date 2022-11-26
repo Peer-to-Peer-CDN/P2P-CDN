@@ -74,6 +74,7 @@ export class MediationServer {
 
     private getConnectionByPeerId(peerId: string): MediationProtocol | undefined {
         const peerConnector = this.peerConnectorsWithId.get(peerId);
+        console.log(this.peerConnectorsWithId, "on", this.mediatorId);
         if (peerConnector != null) {
             return peerConnector.getConnection();
         } else {

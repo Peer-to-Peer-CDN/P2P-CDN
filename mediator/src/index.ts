@@ -7,7 +7,8 @@ const testHash1 = "test-hash1";
 const peerId1 = "Peer1----------------------------------.";
 const peerId2 = "Peer2----------------------------------.";
 const peerId3 = "Peer3----------------------------------.";
-
+console.log("================================================================");
+console.log("================================================================");
 const ms = new MediationServer(new Server(8888, {cors:{origin: '*'}}));
 ms.run();
 console.log("Identity above is port 8888");

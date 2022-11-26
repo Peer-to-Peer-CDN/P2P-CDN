@@ -18,6 +18,10 @@ let dht1 = new DHTNode("ffffffffffffffffffffffffffffffffffffffff", false, 9990, 
     let dht4 = new DHTNode("cccccccccccccccccccccccccccccccccccccccc", ["127.0.0.1:9990"], 9993, () => {
         dht4.announce("3333333333333333333333333333333333333333");
     });
+    
+    let dht5 = new DHTNode("dddddddddddddddddddddddddddddddddddddddd", ["127.0.0.1:9990"], 9994, () => {
+        dht5.announce("3333333333333333333333333333333333333333");
+    });
 });
 
 
