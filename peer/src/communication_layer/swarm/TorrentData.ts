@@ -25,7 +25,7 @@ export function generateFullHash(pieces: ArrayBuffer[]) : string {
     }
 }
 
-function generateMerkleRoot(hashes: string[]) : string {
+export function generateMerkleRoot(hashes: string[]) : string {
     if(hashes.length <= 1) {
         return hashes[0];
     }

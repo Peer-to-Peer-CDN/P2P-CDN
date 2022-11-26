@@ -120,15 +120,11 @@ export class PeerWire implements IPeerWire{
         
         this.peer.unchoke();
         if(!this.peer.peerChoking) {
-           //setTimeout(() => { //TODO REMOVE
-
             this.peer.request(index, 0, piece_length, (err: Error) => {
                 if(err) {
                     console.error(err);
                 }
             });
-
-           //}, 200); //TODO REMOVE
         }
     }
 
@@ -147,16 +143,11 @@ export class PeerWire implements IPeerWire{
         this.run();
     }
 
-    private onInterested() {
+    private onInterested() {}
 
-    }
+    private onUninterested() {}
 
-    private onUninterested() {
-
-    }
-
-    private onHave(piece_index : number) {
-    }
+    private onHave(piece_index : number) {}
 
     private onRequest(piece_index : number, offset : number, length : number, callback :any) {
         if(this.torrent_data.havePiece(piece_index)){

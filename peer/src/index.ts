@@ -9,6 +9,7 @@ import {io} from 'socket.io-client';
 
 const identityGenerator: IIdentityGenerator = new DefaultIdentityGenerator();
 
+
 let fileIncluder: FileIncluder;
 let iceCandidates: ICECandidate[];
 
@@ -75,16 +76,15 @@ class FilePackage {
     data: ArrayBuffer[];
 }
 
-const pieces_length = 100000;
+const pieces_length = 15_000; //MAX is around 200_000
 function assembleInfoDictionary(file: File) : Promise<FilePackage> {
     let pieces_amount = file.size % pieces_length == 0 ? file.size / pieces_length : Math.floor(file.size / pieces_length) + 1;
     let info_dictionary = new InfoDictionary("", file.name, pieces_length, pieces_amount, file.size);
     let aba = generateArrayBufferArray(info_dictionary, file);
     return aba.then(buffer => {
         buffer.forEach(ab => {
-            info_dictionary.piece_hashes.push(generateFullHash([ab]));
+            info_dictionary.piece_hashes.push(generateFullHash([ab])); 
         });
-        console.log("pieces look like this:", buffer);
         info_dictionary.full_hash = generateFullHash(buffer);
         let fp = new FilePackage();
         fp.infoDictionary = info_dictionary;
