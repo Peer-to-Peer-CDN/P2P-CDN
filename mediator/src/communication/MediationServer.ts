@@ -65,6 +65,7 @@ export class MediationServer {
         const peerIds = this.fullHashesWithPeerIds.get(fullHash);
 
         if (peerIds == null && connectionType == ConnectionType.MEDIATION && initiatorPeerId) {
+            console.log("now getting peers via m2");
             this.mediationReplicator.getPeersFromOtherMediator(fullHash, this.mediatorId, initiatorPeerId); // Callback
         }
 
