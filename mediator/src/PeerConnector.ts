@@ -9,28 +9,29 @@ export class PeerConnector {
     private dataHolder : MediationRouter;
     private peerId: string;
 
-    constructor(DHT:DHTNode ,peerId: string,protocol: MediationProtocol, dataHolder: MediationRouter) {
+    constructor(DHT:DHTNode ,peerId: string,protocol: MediationProtocol, router: MediationRouter) {
         this.peerId = peerId;
         this.DHT = DHT;
-        this.dataHolder = dataHolder;
+        this.dataHolder = router;
         this.protocol = protocol;
         protocol.on('get_peers', (full_hash: string) => {
-            let localPeers = dataHolder.peerIdByFullHash.get(full_hash);
+            let localPeers = router.peerIdByFullHash.get(full_hash);
             if(localPeers) {
                 protocol.peers(full_hash, localPeers!);
-            } else {
-                dataHolder.getRemotePeers(full_hash, this);
+            } 
+            if(localPeers?.length || 0 < this.MINIMUM_PEER_AMOUNT_THRESHHOLD) {
+                router.getRemotePeers(full_hash, this);
             }
             
         });
         protocol.on('signal', (full_hash:string, receiverPeerId: string, signalData: string) => {
-            dataHolder.routeSignal(full_hash, receiverPeerId, signalData, peerId);
+            router.routeSignal(full_hash, receiverPeerId, signalData, peerId);
         });
         protocol.on('peers', (full_hash:string, peerList: string[]) => {
             console.warn("peer tried to send peerlist, which makes no sense");
         });
         protocol.on('announce', (full_hash:string) => {
-            dataHolder.announce(full_hash, peerId);
+            router.announce(full_hash, peerId);
         });
 
         protocol.on('finish', (full_hash: string) => {

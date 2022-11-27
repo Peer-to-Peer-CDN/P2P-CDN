@@ -53,7 +53,6 @@ export class MediationRouter {
 
     private routeSignalToPeer(full_hash: string, receiverId: string, signalData: string, peerId: string) {
         let receiverConnector = this.connectionByReceiverId.get(receiverId);
-        console.log(receiverId);
         let receiverIdOrConcat;
         if(receiverConnector instanceof PeerConnector) {
             receiverIdOrConcat = peerId;

@@ -44,4 +44,4 @@ setTimeout(() => {
 
 setTimeout(() => {
     let mediator2 = new MediationServer(new Server(8889, {cors: {origin: '*'}}), false, 5556, 8889);
-}, 1)
+}, 1);

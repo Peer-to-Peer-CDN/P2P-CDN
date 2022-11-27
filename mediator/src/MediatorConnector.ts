@@ -6,20 +6,20 @@ export class MediatorConnector {
     public readonly protocol: MediationProtocol;
     private readonly dataHolder: MediationRouter;
 
-    constructor(protocol: MediationProtocol, dataHolder: MediationRouter) {
+    constructor(protocol: MediationProtocol, router: MediationRouter) {
         this.protocol = protocol;
-        this.dataHolder = dataHolder;
+        this.dataHolder = router;
         protocol.on('get_peers', (full_hash: string) => {
-            let peers = dataHolder.getPeerIdsByFullHash(full_hash);
+            let peers = router.getPeerIdsByFullHash(full_hash);
             if(peers) {
                 protocol.peers(full_hash, peers);
             }
         });
         protocol.on('signal', (full_hash:string, concatPeerId: string, signalData: string) => {
-            dataHolder.routeSignal(full_hash, concatPeerId, signalData, this);
+            router.routeSignal(full_hash, concatPeerId, signalData, this);
         });
         protocol.on('peers', (full_hash:string, peerList: string[]) => {
-            dataHolder.routePeersToPeer(full_hash, peerList, this);
+            router.routePeersToPeer(full_hash, peerList, this);
         });
         protocol.on('announce', (full_hash:string) => {
             console.warn("mediator tried to announce, which makes no sense");
