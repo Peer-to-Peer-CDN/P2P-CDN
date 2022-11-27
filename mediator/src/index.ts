@@ -1,103 +1,47 @@
-import {Server} from "socket.io";
-import {MediationServer} from "./communication/MediationServer";
-import {io} from "socket.io-client";
-import {ConnectionType, MediationProtocol} from "../../common/MediationProtocol";
+import { Server } from "socket.io";
+import { MediationServer } from "./MediationServer";
 
-const testHash1 = "test-hash1";
-const peerId1 = "Peer1----------------------------------.";
-const peerId2 = "Peer2----------------------------------.";
-const peerId3 = "Peer3----------------------------------.";
-console.log("================================================================");
-console.log("================================================================");
-const ms = new MediationServer(new Server(8888, {cors:{origin: '*'}}));
-ms.run();
-console.log("Identity above is port 8888");
-
-setTimeout(() => {
-    const ms2 = new MediationServer(new Server(8889, {cors:{origin: '*'}}));
-    ms2.run();
-    console.log("Identity above is port 8889");
-}, 100);
-
-/*
- ***** Example for mediator to mediator communication *****
- *
-let socket1: any;
+// TEST
+/*let socket1: any;
 let socket2: any;
 
 setTimeout(() => {
     socket1 = io("ws://localhost:8888");
-    socket2 = io("ws://localhost:8889");
-}, 100);
+    const peer1 = new MediationProtocol(socket1);
+    peer1.handshake("111111111111111111111111111111111111111.", ConnectionType.MEDIATION);
+    peer1.on('established', () => {
+        peer1.announce("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.");
+        peer1.on('signal', (fullhash, senderPeerId, data) => {
+            console.log("recieved signal for", fullhash, "from", senderPeerId, "with message", data);
+
+            peer1.signal("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.", senderPeerId, "i would love to connect bro");
+        });
+    })
+}, 1000)
 
 setTimeout(() => {
+    socket2 = io("ws://localhost:8888");
     const peer2 = new MediationProtocol(socket2);
-    peer2.handshake(peerId2, ConnectionType.MEDIATION);
-    peer2.on("established", () => peer2.announce(testHash1));
-    peer2.on("signal", (fullHash, initiatorPeerId, signalData) => console.log("Received signal on Peer2 for '" + fullHash + "' from '" + initiatorPeerId + "', " + signalData));
 
-    setTimeout(() => {
-        const peer1 = new MediationProtocol(socket1);
-        peer1.handshake(peerId1, ConnectionType.MEDIATION);
+    peer2.handshake("222222222222222222222222222222222222222.", ConnectionType.MEDIATION);
+    peer2.on('established', () => {
+        peer2.get_peers("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.");
+    });
 
-        peer1.on('established', () => {
-            peer1.get_peers(testHash1);
-            peer1.on("peers", (fullHash, peerIds) => {
-                console.log("Received " + fullHash + ", PeerIds: " + peerIds);
-                if (peerIds.length > 0) {
-                    peer1.signal(testHash1, peerIds[0], "signal test");
-                }
-            });
-        });
-    }, 100);
-}, 100);
-*/
+    peer2.on('peers', (full_hash: string, peerList: string[]) => {
+        console.log("it works", full_hash, peerList);
+        peer2.signal("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.", peerList[0], "hello world please connect");
+    });
+    peer2.on('signal', (fullhash, senderPeerid, data) => {
+        console.log("...recieved signal for", fullhash, "from", senderPeerid, "with message", data);
+    });
+}, 2000); */
 
 
+setTimeout(() => {
+    let mediator1 = new MediationServer(new Server(8888, {cors: {origin: '*'}}), ["127.0.0.1:5556"], 5555, 8888);
+}, 500);
 
-
-
-/*
- ***** Example for peer to peer communication over one mediator *****
- *
-const socket1 = io("ws://localhost:8888");
-const socket2 = io("ws://localhost:8888");
-const socket3 = io("ws://localhost:8888");
-
-setTimeout(() => { // Timeout because of race condition
-    const peer1 = new MediationProtocol(socket1);
-    peer1.handshake(peerId1, ConnectionType.MEDIATION);
-    peer1.on('established', () => console.log("established Peer1"));
-    peer1.on('peers', (fullHash: string, peerList: string[]) => onGetPeers("Peer1", fullHash, peerList));
-    peer1.on('signal', (fullHash: string, receiverPeerId: string, signalData: string) => console.log("signal " + receiverPeerId + " to Peer1. FullHash: " + fullHash + ". Data: " + signalData));
-
-    const peer2 = new MediationProtocol(socket2);
-    peer2.handshake(peerId2, ConnectionType.MEDIATION);
-    peer2.on('established', () => console.log("established Peer2"));
-    peer2.on('peers', (fullHash: string, peerList: string[]) => onGetPeers("Peer2", fullHash, peerList));
-
-    const peer3 = new MediationProtocol(socket3);
-    peer3.handshake(peerId3, ConnectionType.MEDIATION);
-    peer3.on('established', () => console.log("established Peer3"));
-    peer3.on('peers', (fullHash: string, peerList: string[]) => onGetPeers("Peer3", fullHash, peerList));
-
-    setTimeout(() => { // Timeout because of race condition
-        peer1.announce(testHash1);
-        peer1.get_peers(testHash1);
-
-        peer2.announce(testHash1);
-        peer2.get_peers(testHash1);
-
-        peer3.announce(testHash1);
-        peer3.get_peers(testHash1);
-
-        setTimeout(() => peer2.signal(testHash1, "Peer1", "signal peer2 to peer1"), 100);
-        setTimeout(() => peer1.finish(testHash1), 100);
-        setTimeout(() => peer3.get_peers(testHash1), 100);
-    }, 100);
-}, 100);
-
-function onGetPeers(actualPeer: string, fullHash: string, peerList: string[]) {
-    console.log("onPeers " + actualPeer + ". FullHash: " + fullHash + ". Peers: " + JSON.stringify(peerList));
-}
-*/
+setTimeout(() => {
+    let mediator2 = new MediationServer(new Server(8889, {cors: {origin: '*'}}), false, 5556, 8889);
+}, 1)
