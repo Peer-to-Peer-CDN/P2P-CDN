@@ -43,7 +43,7 @@ export function includeImages(fileNames: string[], cssStrings: string[], mediato
     }
 }
 
-export function seedFile(file: File, mediatorAddress:string, mediatorPort: number) {
+export function seedFile(file: File, mediatorAddress:string, mediatorPort: number, dictionaryCallback: (dictionaryString: Object) => void) {
 
     assembleInfoDictionary(file).then(fp => {
         console.log("Seeding file: ", fp.infoDictionary);
@@ -51,6 +51,7 @@ export function seedFile(file: File, mediatorAddress:string, mediatorPort: numbe
         let mc = new MediationClient(identityGenerator.generateIdentity(), () => io(`ws://${mediatorAddress}:${mediatorPort}`));
         let sm = new SwarmManager(fp.infoDictionary, mc, () => {}, torrentData);
         mc.announce(fp.infoDictionary.full_hash);
+        dictionaryCallback(fp.infoDictionary);
     });
 }
 

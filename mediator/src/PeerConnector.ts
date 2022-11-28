@@ -4,6 +4,7 @@ import { MediationRouter } from "./MediationRouter";
 
 export class PeerConnector {
     public readonly protocol: MediationProtocol;
+    public readonly knownHashesSet = new Set<string>();
     private readonly MINIMUM_PEER_AMOUNT_THRESHHOLD = 1;
     private DHT: DHTNode;
     private dataHolder : MediationRouter;
@@ -15,11 +16,12 @@ export class PeerConnector {
         this.dataHolder = router;
         this.protocol = protocol;
         protocol.on('get_peers', (full_hash: string) => {
+            this.knownHashesSet.add(full_hash);
             let localPeers = router.peerIdByFullHash.get(full_hash);
             if(localPeers) {
                 protocol.peers(full_hash, localPeers!);
             } 
-            if(localPeers?.length || 0 < this.MINIMUM_PEER_AMOUNT_THRESHHOLD) {
+            if(!localPeers || localPeers?.length < this.MINIMUM_PEER_AMOUNT_THRESHHOLD) {
                 router.getRemotePeers(full_hash, this);
             }
             
@@ -35,7 +37,7 @@ export class PeerConnector {
         });
 
         protocol.on('finish', (full_hash: string) => {
-            //TODO implement
+            router.finishPeer(peerId);
         });
     }
 

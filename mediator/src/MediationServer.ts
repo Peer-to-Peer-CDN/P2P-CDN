@@ -12,16 +12,19 @@ export class MediationServer {
     private mediatorId;
     constructor(server: Server, DHTBootstrapAddrs: string[] | false, dhtPort:number, mediationPort:number) {
         let DHT = new DHTNode(this.mediatorId, DHTBootstrapAddrs, dhtPort, () => {});
-        let dataHolder = new MediationRouter(mediationPort, DHT);
+        let router = new MediationRouter(mediationPort, DHT);
         this.mediatorId = new DefaultIdentityGenerator().generateIdentity();
         server.on('connection', (socket) => {
             let mediationProtocol = new MediationProtocol(socket);
             mediationProtocol.on('handshake', (peerId, connectionType) => {
                 if(connectionType == ConnectionType.MEDIATION) {
-                    let pc = new PeerConnector(DHT, peerId, mediationProtocol, dataHolder);
-                    dataHolder.connectionByReceiverId.set(peerId, pc);
+                    let pc = new PeerConnector(DHT, peerId, mediationProtocol, router);
+                    router.connectionByReceiverId.set(peerId, pc);
+                    socket.on('disconnect', () => {
+                        router.finishPeer(peerId);
+                    });
                 } else if(connectionType == ConnectionType.REPLICATION) {
-                    let mc = new MediatorConnector(mediationProtocol, dataHolder);
+                    let mc = new MediatorConnector(mediationProtocol, router);
                 }
                 mediationProtocol.established();
             });

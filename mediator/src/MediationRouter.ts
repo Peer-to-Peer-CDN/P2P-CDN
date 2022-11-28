@@ -56,8 +56,11 @@ export class MediationRouter {
         let receiverIdOrConcat;
         if(receiverConnector instanceof PeerConnector) {
             receiverIdOrConcat = peerId;
-        } else {
+        } else if(receiverConnector instanceof MediatorConnector){
             receiverIdOrConcat = peerId + receiverId;
+        } else {
+            console.error("connection not found");
+            return;
         }
 
         if(receiverConnector) {
@@ -106,6 +109,15 @@ export class MediationRouter {
         if(pendingPeers) {
             pendingPeers.forEach(peerConnector => {
                 peerConnector.protocol.peers(full_hash, peerList);
+            });
+        }
+    }
+    public finishPeer(peerId: string) {
+        let connection = this.connectionByReceiverId.get(peerId) as PeerConnector;
+        if(connection) {
+            this.connectionByReceiverId.delete(peerId);
+            connection.knownHashesSet?.forEach(value => {
+                this.peerIdByFullHash.set(value, this.peerIdByFullHash.get(value)?.filter(e => e!== peerId) || []);
             });
         }
     }
