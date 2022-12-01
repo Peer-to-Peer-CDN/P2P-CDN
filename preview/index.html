@@ -22,6 +22,7 @@
 
 
             document.querySelector("#downloadButton").onclick = function() {
+                const serverPort = 8889;
                 let id = JSON.parse(document.querySelector("#infoDictInput").value);
                 let filename = id.file_name; 
                 cdn.initialize([id], serverUrl, serverPort);
@@ -92,7 +93,7 @@
             <div class=box>
                 <h1>Upload a file to share</h1>
                 <input type="file" id="uploadFileInput"/>
-                <textarea name="" id="infoDictOutput" cols="30" rows="10"></textarea>
+                <textarea name="" id="infoDictOutput" cols="30" rows="10" readonly></textarea>
             </div>
         </div>
         <div class="collumn">
