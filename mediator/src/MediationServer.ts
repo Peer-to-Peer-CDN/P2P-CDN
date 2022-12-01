@@ -1,30 +1,37 @@
 import {Server} from "socket.io";
+import { IIdentityGenerator } from "../../common/IIdentityGenerator";
 import { DefaultIdentityGenerator } from "../../common/DefaultIdentityGenerator";
+import {ConnectionKeyWords, ConnectionType, MediationProtocol} from "../../common/MediationProtocol";
 import { DHTNode } from "./DHTNode";
-import {ConnectionType, MediationProtocol} from "../../common/MediationProtocol";
+import { PeerConnector } from "./PeerConnector";
 import { MediationRouter } from "./MediationRouter";
 import { MediatorConnector } from "./MediatorConnector";
-import { PeerConnector } from "./PeerConnector";
-
 
 export class MediationServer {
+    private readonly server: Server;
+    private readonly mediatorId: string;
+    private readonly dht: DHTNode;
+    private readonly router: MediationRouter;
 
-    private mediatorId;
-    constructor(server: Server, DHTBootstrapAddrs: string[] | false, dhtPort:number, mediationPort:number) {
-        let DHT = new DHTNode(this.mediatorId, DHTBootstrapAddrs, dhtPort, () => {});
-        let router = new MediationRouter(mediationPort, DHT);
-        this.mediatorId = new DefaultIdentityGenerator().generateIdentity();
-        server.on('connection', (socket) => {
-            let mediationProtocol = new MediationProtocol(socket);
-            mediationProtocol.on('handshake', (peerId, connectionType) => {
+    constructor(server: Server, dhtBootstrapAddress: string[] | false, dhtPort: number, mediationPort: number, identityGenerator?: IIdentityGenerator) {
+        this.server = server;
+        this.mediatorId = identityGenerator?.generateIdentity() ?? new DefaultIdentityGenerator().generateIdentity();
+        this.dht = new DHTNode(this.mediatorId, dhtBootstrapAddress, dhtPort, () => {});
+        this.router = new MediationRouter(mediationPort, this.dht);
+    }
+
+    public run() {
+        this.server.on(ConnectionKeyWords.CONNECTION, (socket) => {
+            const mediationProtocol = new MediationProtocol(socket);
+            mediationProtocol.on(ConnectionKeyWords.HANDSHAKE, (peerId, connectionType) => {
                 if(connectionType == ConnectionType.MEDIATION) {
-                    let pc = new PeerConnector(DHT, peerId, mediationProtocol, router);
-                    router.connectionByReceiverId.set(peerId, pc);
-                    socket.on('disconnect', () => {
-                        router.finishPeer(peerId);
-                    });
+                    const peerConnector = new PeerConnector(this.dht, peerId, mediationProtocol, this.router);
+                    peerConnector.startListener();
+                    this.router.connectionByReceiverId.set(peerId, peerConnector);
+                    socket.on('disconnect', () => { this.router.finishPeer(peerId); });
                 } else if(connectionType == ConnectionType.REPLICATION) {
-                    let mc = new MediatorConnector(mediationProtocol, router);
+                    const mediatorConnector = new MediatorConnector(mediationProtocol, this.router);
+                    mediatorConnector.startListener();
                 }
                 mediationProtocol.established();
             });
