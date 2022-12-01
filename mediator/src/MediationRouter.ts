@@ -1,21 +1,26 @@
 import { io } from "socket.io-client";
-import { DHTNode } from "./DHTNode";
+import { IIdentityGenerator } from "../../common/IIdentityGenerator";
+import { DefaultIdentityGenerator } from "../../common/DefaultIdentityGenerator";
 import { ConnectionType, MediationProtocol } from "../../common/MediationProtocol";
-import { MediatorConnector } from "./MediatorConnector";
+import { DHTNode } from "./DHTNode";
 import { PeerConnector } from "./PeerConnector";
+import { MediatorConnector } from "./MediatorConnector";
 
 export class MediationRouter {
-    constructor(port:number, DHT: DHTNode) {
-        this.mediationPort = port;
-        this.DHT = DHT;
-    }
     private DHT: DHTNode;
-    private mediationPort: number;
+    private readonly mediationPort: number;
+    private readonly mediatorId: string;
     public readonly connectionByReceiverId = new Map<string, PeerConnector | MediatorConnector>();
     public readonly peerIdByFullHash = new Map<string, string[]>();
     
     private pendingPeerConnectionByFullHash = new Map<string, PeerConnector[]>();
     private mediatorConnectionByAddress = new Map<string, MediatorConnector>();
+
+    constructor(port: number, DHT: DHTNode, identityGenerator?: IIdentityGenerator) {
+        this.mediationPort = port;
+        this.DHT = DHT;
+        this.mediatorId = identityGenerator?.generateIdentity() ?? new DefaultIdentityGenerator().generateIdentity();
+    }
 
     public getRemotePeers(full_hash: string, peerConnector: PeerConnector) {
         this.DHT.find_mediators(full_hash, (hostname, port) => {
@@ -34,7 +39,7 @@ export class MediationRouter {
                 const protocol = new MediationProtocol(socket);
                 mediator = new MediatorConnector(protocol, this);
                 this.mediatorConnectionByAddress.set(hostname + port.toString(), mediator);
-                protocol.handshake("mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm.", ConnectionType.REPLICATION);
+                protocol.handshake(this.mediatorId, ConnectionType.REPLICATION);
                 protocol.on('established', () => {
                     protocol.get_peers(full_hash);
                 });
