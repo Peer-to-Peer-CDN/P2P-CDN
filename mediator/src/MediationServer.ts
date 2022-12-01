@@ -28,7 +28,7 @@ export class MediationServer {
                     const peerConnector = new PeerConnector(this.dht, peerId, mediationProtocol, this.router);
                     peerConnector.startListener();
                     this.router.connectionByReceiverId.set(peerId, peerConnector);
-                    socket.on('disconnect', () => { this.router.finishPeer(peerId); });
+                    socket.on(ConnectionKeyWords.DISCONNECT, () => { this.router.finishPeer(peerId); });
                 } else if(connectionType == ConnectionType.REPLICATION) {
                     const mediatorConnector = new MediatorConnector(mediationProtocol, this.router);
                     mediatorConnector.startListener();

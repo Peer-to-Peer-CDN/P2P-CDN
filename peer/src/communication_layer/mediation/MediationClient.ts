@@ -2,7 +2,7 @@ import { IP2PTransport } from "../../transport_layer/IP2PTransport";
 import { IMediationClient, MediationEventHandler } from "./IMediationClient";
 import { ITorrentData } from "../swarm/ITorrentData";
 import { PeerWire } from "../peer/PeerWire";
-import {ConnectionType, MediationProtocol} from "../../../../common/MediationProtocol";
+import { ConnectionKeyWords, ConnectionType, MediationProtocol} from "../../../../common/MediationProtocol";
 var io = require('socket.io-client');
 import SimplePeer from "simple-peer";
 
@@ -25,9 +25,9 @@ export class MediationClient implements IMediationClient{
         this.protocol = new MediationProtocol(socket);
         this.peerId = peerId;
         this.protocol.handshake(this.peerId, ConnectionType.MEDIATION);
-        this.protocol.on('established', () => {
-            this.protocol.on('peers', (...args) => this.onPeers.apply(this, args)); 
-            this.protocol.on('signal', (...args) => this.onSignal.apply(this, args));
+        this.protocol.on(ConnectionKeyWords.ESTABLISHED, () => {
+            this.protocol.on(ConnectionKeyWords.PEERS, (...args) => this.onPeers.apply(this, args)); 
+            this.protocol.on(ConnectionKeyWords.SIGNAL, (...args) => this.onSignal.apply(this, args));
         });
     }
 
@@ -48,7 +48,7 @@ export class MediationClient implements IMediationClient{
                 console.log("connected");
                 this.addPeer(full_hash, rtc, true);
             });
-            rtc.on('signal', (data:any) => {
+            rtc.on(ConnectionKeyWords.SIGNAL, (data:any) => {
                 this.protocol.signal(full_hash, peer, JSON.stringify(data));
             });
         });
@@ -59,7 +59,7 @@ export class MediationClient implements IMediationClient{
         if(!rtc) { //new peer trying to connect to us!
             rtc = new SimplePeer({initiator: false, config: { iceServers: this.iceServers}});
             rtc.signal(JSON.parse(signalData));
-            rtc.on('signal', data => {
+            rtc.on(ConnectionKeyWords.SIGNAL, data => {
                 this.protocol.signal(full_hash, senderPeer, JSON.stringify(data));
             });
             rtc.on('connect', () => {
