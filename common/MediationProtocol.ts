@@ -7,6 +7,19 @@ export enum ConnectionType {
     REPLICATION
 }
 
+export enum ConnectionKeyWords {
+    CONNECTION = "connection",
+    CONNECT = "connect",
+    DISCONNECT = "disconnect",
+    HANDSHAKE = "handshake",
+    ESTABLISHED = "established",
+    GET_PEERS = "get_peers",
+    PEERS = "peers",
+    SIGNAL = "signal",
+    ANNOUNCE = "announce",
+    FINISH = "finish"
+}
+
 export class MediationProtocol {
     private stream: IClientServerTransport;
     protected listeners: Map<string, MediationEventCallback[]>;
@@ -15,13 +28,13 @@ export class MediationProtocol {
         this.stream = stream;
         this.listeners = new Map<string, MediationEventCallback[]>();
 
-        stream.on('handshake', (...args: any[]) => this.listeners.get('handshake')?.forEach((callback) => callback(...args)));
-        stream.on('established', (...args: any[]) => this.listeners.get('established')?.forEach((callback) => callback(...args)));
-        stream.on('get_peers', (...args: any[]) => this.listeners.get('get_peers')?.forEach((callback) => callback(...args)));
-        stream.on('peers', (...args: any[]) => this.listeners.get('peers')?.forEach((callback) => callback(...args)));
-        stream.on('signal', (...args: any[]) => this.listeners.get('signal')?.forEach((callback) => callback(...args)));
-        stream.on('announce', (...args: any[]) => this.listeners.get('announce')?.forEach((callback) => callback(...args)));
-        stream.on('finish', (...args: any[]) => this.listeners.get('finish')?.forEach((callback) => callback(...args)));
+        stream.on(ConnectionKeyWords.HANDSHAKE, (...args: any[]) => this.listeners.get(ConnectionKeyWords.HANDSHAKE)?.forEach((callback) => callback(...args)));
+        stream.on(ConnectionKeyWords.ESTABLISHED, (...args: any[]) => this.listeners.get(ConnectionKeyWords.ESTABLISHED)?.forEach((callback) => callback(...args)));
+        stream.on(ConnectionKeyWords.GET_PEERS, (...args: any[]) => this.listeners.get(ConnectionKeyWords.GET_PEERS)?.forEach((callback) => callback(...args)));
+        stream.on(ConnectionKeyWords.PEERS, (...args: any[]) => this.listeners.get(ConnectionKeyWords.PEERS)?.forEach((callback) => callback(...args)));
+        stream.on(ConnectionKeyWords.SIGNAL, (...args: any[]) => this.listeners.get(ConnectionKeyWords.SIGNAL)?.forEach((callback) => callback(...args)));
+        stream.on(ConnectionKeyWords.ANNOUNCE, (...args: any[]) => this.listeners.get(ConnectionKeyWords.ANNOUNCE)?.forEach((callback) => callback(...args)));
+        stream.on(ConnectionKeyWords.FINISH, (...args: any[]) => this.listeners.get(ConnectionKeyWords.FINISH)?.forEach((callback) => callback(...args)));
     }
 
     on(event: string, callback: MediationEventCallback) {
@@ -33,30 +46,30 @@ export class MediationProtocol {
     }
 
     public handshake(peerId: string, connectionType: ConnectionType) {
-        this.stream.emit('handshake', peerId, connectionType);
+        this.stream.emit(ConnectionKeyWords.HANDSHAKE, peerId, connectionType);
     }
 
     public established() {
-        this.stream.emit('established');
+        this.stream.emit(ConnectionKeyWords.ESTABLISHED);
     }
 
     public get_peers(fullHash: string) {
-        this.stream.emit('get_peers', fullHash);
+        this.stream.emit(ConnectionKeyWords.GET_PEERS, fullHash);
     }
 
     public peers(fullHash: string, peerList: string[]) {
-        this.stream.emit('peers', fullHash, peerList);
+        this.stream.emit(ConnectionKeyWords.PEERS, fullHash, peerList);
     }
 
     public signal(fullHash: string, receiverPeerId: string, signalData: string) {
-        this.stream.emit('signal', fullHash, receiverPeerId, signalData);
+        this.stream.emit(ConnectionKeyWords.SIGNAL, fullHash, receiverPeerId, signalData);
     }
 
     public announce(fullHash: string) {
-        this.stream.emit('announce', fullHash);
+        this.stream.emit(ConnectionKeyWords.ANNOUNCE, fullHash);
     }
 
     public finish(fullHash: string) {
-        this.stream.emit('finish', fullHash);
+        this.stream.emit(ConnectionKeyWords.FINISH, fullHash);
     }
 }
