@@ -2,14 +2,14 @@ import { IP2PTransport } from "../../transport_layer/IP2PTransport";
 import { IMediationClient, MediationEventHandler } from "./IMediationClient";
 import { ITorrentData } from "../swarm/ITorrentData";
 import { PeerWire } from "../peer/PeerWire";
-import {ConnectionType, MediationProtocol} from "../../../../common/MediationProtocol";
+import { ConnectionKeyWords, ConnectionType, MediationProtocol} from "../../../../common/MediationProtocol";
 var io = require('socket.io-client');
 import SimplePeer from "simple-peer";
 
 export type ICECandidate = {urls: string, username?: string, credential?:string};
 export class MediationClient implements IMediationClient{
     private add_peer_event_handlers = new Map<string, MediationEventHandler>(); //full_hash => peer_event_handler()
-    private protocol: MediationProtocol; 
+    private protocol: MediationProtocol;
     private peerId;
     private RTCs : Map<string, SimplePeer.Instance> = new Map(); //map peerId to SimplePeers instances
 
@@ -25,9 +25,9 @@ export class MediationClient implements IMediationClient{
         this.protocol = new MediationProtocol(socket);
         this.peerId = peerId;
         this.protocol.handshake(this.peerId, ConnectionType.MEDIATION);
-        this.protocol.on('established', () => {
-            this.protocol.on('peers', (...args) => this.onPeers.apply(this, args)); 
-            this.protocol.on('signal', (...args) => this.onSignal.apply(this, args));
+        this.protocol.on(ConnectionKeyWords.ESTABLISHED, () => {
+            this.protocol.on(ConnectionKeyWords.PEERS, (...args) => this.onPeers.apply(this, args));
+            this.protocol.on(ConnectionKeyWords.SIGNAL, (...args) => this.onSignal.apply(this, args));
         });
     }
 
@@ -44,11 +44,11 @@ export class MediationClient implements IMediationClient{
             if(!this.RTCs.get(peer)) {
                 this.RTCs.set(peer, rtc);
             }
-            rtc.on('connect', () => {
+            rtc.on(ConnectionKeyWords.CONNECT, () => {
                 console.log("connected");
                 this.addPeer(full_hash, rtc, true);
             });
-            rtc.on('signal', (data:any) => {
+            rtc.on(ConnectionKeyWords.SIGNAL, (data:any) => {
                 this.protocol.signal(full_hash, peer, JSON.stringify(data));
             });
         });
@@ -59,10 +59,10 @@ export class MediationClient implements IMediationClient{
         if(!rtc) { //new peer trying to connect to us!
             rtc = new SimplePeer({initiator: false, config: { iceServers: this.iceServers}});
             rtc.signal(JSON.parse(signalData));
-            rtc.on('signal', data => {
+            rtc.on(ConnectionKeyWords.SIGNAL, data => {
                 this.protocol.signal(full_hash, senderPeer, JSON.stringify(data));
             });
-            rtc.on('connect', () => {
+            rtc.on(ConnectionKeyWords.CONNECT, () => {
                 //@ts-ignore //rtc is not assignable to type IP2PTransport for some reason, should still work.
                 this.addPeer(full_hash, rtc, false);
             });
