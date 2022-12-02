@@ -19,12 +19,14 @@ export class MediationServer {
             mediationProtocol.on('handshake', (peerId, connectionType) => {
                 if(connectionType == ConnectionType.MEDIATION) {
                     let pc = new PeerConnector(DHT, peerId, mediationProtocol, router);
+                    pc.startListener();
                     router.connectionByReceiverId.set(peerId, pc);
                     socket.on('disconnect', () => {
                         router.finishPeer(peerId);
                     });
                 } else if(connectionType == ConnectionType.REPLICATION) {
                     let mc = new MediatorConnector(mediationProtocol, router);
+                    mc.startListener();
                 }
                 mediationProtocol.established();
             });

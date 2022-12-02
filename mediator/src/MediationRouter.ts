@@ -38,6 +38,7 @@ export class MediationRouter {
                 const socket = io("ws://" + hostname + ":" + port.toString());
                 const protocol = new MediationProtocol(socket);
                 mediator = new MediatorConnector(protocol, this);
+                mediator.startListener();
                 this.mediatorConnectionByAddress.set(hostname + port.toString(), mediator);
                 protocol.handshake(this.mediatorId, ConnectionType.REPLICATION);
                 protocol.on('established', () => {
