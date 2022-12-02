@@ -2,7 +2,11 @@ import { Server } from "socket.io";
 import { MediationServer } from "./MediationServer";
 
 // TEST
-/*let socket1: any;
+/*
+import {io} from "socket.io-client";
+import {ConnectionType, MediationProtocol} from "../../common/MediationProtocol";
+
+let socket1: any;
 let socket2: any;
 
 setTimeout(() => {
@@ -35,13 +39,15 @@ setTimeout(() => {
     peer2.on('signal', (fullhash, senderPeerid, data) => {
         console.log("...recieved signal for", fullhash, "from", senderPeerid, "with message", data);
     });
-}, 2000); */
+}, 2000);*/
 
 
 setTimeout(() => {
     let mediator1 = new MediationServer(new Server(8888, {cors: {origin: '*'}}), ["127.0.0.1:5556"], 5555, 8888);
+    mediator1.run();
 }, 500);
 
 setTimeout(() => {
     let mediator2 = new MediationServer(new Server(8889, {cors: {origin: '*'}}), false, 5556, 8889);
+    mediator2.run();
 }, 1);
