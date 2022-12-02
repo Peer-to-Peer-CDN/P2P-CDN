@@ -1,7 +1,7 @@
 import { io } from "socket.io-client";
 import { IIdentityGenerator } from "../../common/IIdentityGenerator";
 import { DefaultIdentityGenerator } from "../../common/DefaultIdentityGenerator";
-import { ConnectionKeyWords, ConnectionType, MediationProtocol } from "../../common/MediationProtocol";
+import { ConnectionType, MediationProtocol } from "../../common/MediationProtocol";
 import { DHTNode } from "./DHTNode";
 import { PeerConnector } from "./PeerConnector";
 import { MediatorConnector } from "./MediatorConnector";
@@ -40,7 +40,7 @@ export class MediationRouter {
                 mediator = new MediatorConnector(protocol, this);
                 this.mediatorConnectionByAddress.set(hostname + port.toString(), mediator);
                 protocol.handshake(this.mediatorId, ConnectionType.REPLICATION);
-                protocol.on(ConnectionKeyWords.ESTABLISHED, () => {
+                protocol.on('established', () => {
                     protocol.get_peers(full_hash);
                 });
             } else {

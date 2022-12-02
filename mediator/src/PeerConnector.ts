@@ -1,4 +1,4 @@
-import { ConnectionKeyWords, MediationProtocol } from "../../common/MediationProtocol";
+import { MediationProtocol } from "../../common/MediationProtocol";
 import {DHTNode} from "./DHTNode";
 import { IConnectorBase } from "./IConnectorBase";
 import { MediationRouter } from "./MediationRouter";
@@ -20,7 +20,7 @@ export class PeerConnector implements IConnectorBase {
     }
 
     public startListener() {
-        this.protocol.on(ConnectionKeyWords.GET_PEERS, (full_hash: string) => {
+        this.protocol.on('get_peers', (full_hash: string) => {
             this.knownHashesSet.add(full_hash);
             let localPeers = this.dataHolder.peerIdByFullHash.get(full_hash);
             if(localPeers) {
@@ -32,19 +32,19 @@ export class PeerConnector implements IConnectorBase {
             }
         });
 
-        this.protocol.on(ConnectionKeyWords.SIGNAL, (full_hash:string, receiverPeerId: string, signalData: string) => {
+        this.protocol.on('signal', (full_hash:string, receiverPeerId: string, signalData: string) => {
             this.dataHolder.routeSignal(full_hash, receiverPeerId, signalData, this.peerId);
         });
 
-        this.protocol.on(ConnectionKeyWords.PEERS, (full_hash:string, peerList: string[]) => {
+        this.protocol.on('peers', (full_hash:string, peerList: string[]) => {
             console.warn("peer tried to send peerlist, which makes no sense");
         });
 
-        this.protocol.on(ConnectionKeyWords.ANNOUNCE, (full_hash:string) => {
+        this.protocol.on('announce', (full_hash:string) => {
             this.dataHolder.announce(full_hash, this.peerId);
         });
 
-        this.protocol.on(ConnectionKeyWords.FINISH, (full_hash: string) => {
+        this.protocol.on('finish', (full_hash: string) => {
             this.dataHolder.finishPeer(this.peerId);
         });
     }
