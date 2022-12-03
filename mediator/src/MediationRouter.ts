@@ -99,7 +99,12 @@ export class MediationRouter {
     }
 
     public getPeerIdsByFullHash(full_hash: string) {
-        return this.peerIdByFullHash.get(full_hash);
+        let ownPeers = this.peerIdByFullHash.get(full_hash)?.filter((peerId) => {
+            let connection = this.connectionByReceiverId.get(peerId);
+            return connection instanceof PeerConnector;
+        });
+        //return this.peerIdByFullHash.get(full_hash);
+        return ownPeers;
     }
 
     public routePeersToPeer(full_hash: string, peerList: string[], mediatorConnector: MediatorConnector) {
