@@ -41,7 +41,7 @@ export class TorrentData implements ITorrentData{
     private pieces : ArrayBuffer[];
     private piece_index_to_timeout_id = new Map();
     info_dictionary : InfoDictionary;
-    readonly timeout_in_ms = 500;
+    readonly timeout_in_ms = 2000;
     private number_of_complete_pieces = 0;
     private completeCallback: CompleteEvent;
     private announceCallback: AnnounceEvent;
