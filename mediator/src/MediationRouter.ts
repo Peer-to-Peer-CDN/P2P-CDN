@@ -103,7 +103,6 @@ export class MediationRouter {
             let connection = this.connectionByReceiverId.get(peerId);
             return connection instanceof PeerConnector;
         });
-        //return this.peerIdByFullHash.get(full_hash);
         return ownPeers;
     }
 
