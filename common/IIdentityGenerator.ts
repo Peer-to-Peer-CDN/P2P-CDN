@@ -1,4 +1,4 @@
 export interface IIdentityGenerator {
-    generateIdentity(): string;
+    generateIdentity(args?: any): string;
 }
 
