@@ -16,10 +16,10 @@ export class MediationRouter {
     private pendingPeerConnectionByFullHash = new Map<string, PeerConnector[]>();
     private mediatorConnectionByAddress = new Map<string, MediatorConnector>();
 
-    constructor(port: number, DHT: DHTNode, identityGenerator?: IIdentityGenerator) {
+    constructor(port: number, DHT: DHTNode, mediatorId: string) {
         this.mediationPort = port;
         this.DHT = DHT;
-        this.mediatorId = identityGenerator?.generateIdentity() ?? new DefaultIdentityGenerator().generateIdentity();
+        this.mediatorId = mediatorId;
     }
 
     public getRemotePeers(full_hash: string, peerConnector: PeerConnector) {
@@ -40,6 +40,7 @@ export class MediationRouter {
                 mediator = new MediatorConnector(protocol, this);
                 mediator.startListener();
                 this.mediatorConnectionByAddress.set(hostname + port.toString(), mediator);
+                socket.on(ConnectionKeyWords.DISCONNECT, () => { this.finishMediatorSeeked(hostname, port); });
                 protocol.handshake(this.mediatorId, ConnectionType.REPLICATION);
                 protocol.on(ConnectionKeyWords.ESTABLISHED, () => {
                     protocol.get_peers(full_hash);
@@ -109,13 +110,16 @@ export class MediationRouter {
             if(!this.peerIdByFullHash.get(full_hash)) {
                 this.peerIdByFullHash.get(full_hash)?.push(peer);
             }
-            this.connectionByReceiverId.set(peer, mediatorConnector);
+            if(!this.connectionByReceiverId.get(peer)) {
+                this.connectionByReceiverId.set(peer, mediatorConnector);
+            }
         });
         let pendingPeers = this.pendingPeerConnectionByFullHash.get(full_hash);
         if(pendingPeers) {
             pendingPeers.forEach(peerConnector => {
                 peerConnector.protocol.peers(full_hash, peerList);
             });
+            this.pendingPeerConnectionByFullHash.delete(full_hash);
         }
     }
     public finishPeer(peerId: string) {
@@ -126,5 +130,11 @@ export class MediationRouter {
                 this.peerIdByFullHash.set(value, this.peerIdByFullHash.get(value)?.filter(e => e!== peerId) || []);
             });
         }
+    }
+    public finishMediatorSeeking(mediatorId: string) {
+        this.connectionByReceiverId.delete(mediatorId);
+    }
+    public finishMediatorSeeked(address: string, port:number) {
+        this.connectionByReceiverId.delete(address + port.toString());
     }
 }

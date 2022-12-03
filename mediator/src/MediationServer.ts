@@ -17,7 +17,7 @@ export class MediationServer {
         this.server = server;
         this.mediatorId = identityGenerator?.generateIdentity() ?? new DefaultIdentityGenerator().generateIdentity();
         this.dht = new DHTNode(this.mediatorId, dhtBootstrapAddress, dhtPort, () => {});
-        this.router = new MediationRouter(mediationPort, this.dht);
+        this.router = new MediationRouter(mediationPort, this.dht, this.mediatorId);
     }
 
     public run() {
@@ -31,6 +31,7 @@ export class MediationServer {
                     socket.on(ConnectionKeyWords.DISCONNECT, () => { this.router.finishPeer(peerId); });
                 } else if(connectionType == ConnectionType.REPLICATION) {
                     const mediatorConnector = new MediatorConnector(mediationProtocol, this.router);
+                    socket.on(ConnectionKeyWords.DISCONNECT, () => {this.router.finishMediatorSeeking(peerId); });
                     mediatorConnector.startListener();
                 }
                 mediationProtocol.established();
