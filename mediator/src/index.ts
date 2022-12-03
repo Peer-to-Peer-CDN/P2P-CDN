@@ -50,6 +50,23 @@ setTimeout(() => {
 }, 2000);
 */
 
+const args = process.argv.slice(2);
+if(args.length < 2) {
+    console.error("amount of arguments is wrong");
+    process.exit();
+}
+
+let mediator_port = Number(args[0]);
+let dht_port = Number(args[1]);
+let dht_bootstrapper = args.length === 3 ? [args[2]] : false;
+
+console.log("mediation port: ", mediator_port);
+console.log("dht_port", dht_port);
+console.log("bootstrapper", dht_bootstrapper);
+
+let mediator = new MediationServer(new Server(mediator_port, {cors: {origin: '*'}}), dht_bootstrapper, dht_port, mediator_port);
+mediator.run();
+/*
 setTimeout(() => {
     let mediator1 = new MediationServer(new Server(8888, {cors: {origin: '*'}}), ["127.0.0.1:5556"], 5555, 8888);
     mediator1.run();
@@ -58,4 +75,4 @@ setTimeout(() => {
 setTimeout(() => {
     let mediator2 = new MediationServer(new Server(8889, {cors: {origin: '*'}}), false, 5556, 8889);
     mediator2.run();
-}, 1);
+}, 1);*/
