@@ -45,7 +45,6 @@ export class MediationClient implements IMediationClient{
                 this.RTCs.set(peer, rtc);
             }
             rtc.on(ConnectionKeyWords.CONNECT, () => {
-                console.log("connected");
                 this.addPeer(full_hash, rtc, true);
             });
             rtc.on(ConnectionKeyWords.SIGNAL, (data:any) => {
