@@ -17,7 +17,7 @@ export class MediationClient implements IMediationClient{
 
     private peerIdBlackList = new Set<string>();
 
-    constructor(peerId: string, socketFactory: any, establishedcallback?: any, iceCandidates?: ICECandidate[]) { //socketFactory = () => any;
+    constructor(peerId: string, socketFactory: any, iceCandidates?: ICECandidate[]) { //socketFactory = () => any;
         if(iceCandidates) {
             this.iceServers = iceCandidates;
         }

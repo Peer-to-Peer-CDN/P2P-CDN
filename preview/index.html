@@ -41,9 +41,8 @@
             margin: 0;
             padding: 0;
             width: 100vw;
-            height: 100vh;
             font-family: sans-serif;
-        
+            text-align: center;
             background-color: #5F7367;
         }
         textarea {
@@ -82,16 +81,29 @@
             margin-top: 20px;
             width: 90%;
         }
+        button, #uploadFileLabel{
+            background-color:rgb(157, 98, 44); 
+            border: 1px solid black;
+            border-radius: 5px;
+            padding: 5px 5px;
+        }
 
+        input[type=file] {
+            display:none;
+        }
     </style>
     <title>Document</title>
 </head>
 <body>
+    <h1>P2P CDN Preview</h1>
     <div id="container">
         <div class="collumn">
             <div class=box>
                 <h1>Upload a file to share</h1>
-                <input type="file" id="uploadFileInput"/>
+                <label id="uploadFileLabel" for="uploadFileInput">
+                    Upload a file
+                    <input type="file" id="uploadFileInput"/>
+                </label>
                 <textarea name="" id="infoDictOutput" cols="30" rows="10" readonly></textarea>
             </div>
         </div>

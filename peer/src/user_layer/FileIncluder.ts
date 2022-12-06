@@ -15,7 +15,7 @@ export class FileIncluder {
         this.peerId = identityGenerator();
         this.torrentManager = new TorrentManager();
         this.torrents = torrents;
-        this.mediationClient = new MediationClient(this.peerId, () => io(`ws://${mediatorAddress}:${mediatorPort}`), () => {}, iceCandidates); 
+        this.mediationClient = new MediationClient(this.peerId, () => io(`ws://${mediatorAddress}:${mediatorPort}`), iceCandidates); 
     }
 
     includeDownload(cssString: string, fileName:string) {

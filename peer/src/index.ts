@@ -35,7 +35,7 @@ export function includeDownloads(fileNames: string[], cssStrings: string[]) {
     }
 }
 
-export function includeImages(fileNames: string[], cssStrings: string[], mediatorAddress: string, mediatorPort: number) {
+export function includeImages(fileNames: string[], cssStrings: string[]) {
     checkInitializedOrError();
     compareLengthAndThrowIfUnequal(fileNames, cssStrings, "fileNames length must match cssstring length");
     for(let i = 0; i < fileNames.length; i++) {
