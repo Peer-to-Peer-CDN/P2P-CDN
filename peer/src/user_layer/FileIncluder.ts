@@ -5,6 +5,9 @@ import { SwarmManager } from "../communication_layer/swarm/SwarmManager";
 import { TorrentManager } from "../communication_layer/TorrentManager";
 import { io } from "socket.io-client";
 import localStorage from "localforage";
+import { generateFullHash, TorrentData } from "../communication_layer/swarm/TorrentData";
+import { IIdentityGenerator } from "../../../common/IIdentityGenerator";
+import { DefaultIdentityGenerator } from "../../../common/DefaultIdentityGenerator";
 
 export class FileIncluder {
     torrentManager: TorrentManager;
@@ -12,6 +15,8 @@ export class FileIncluder {
     mediationClient : MediationClient;
     peerId: string;
     enableCaching: boolean = false;
+
+    readonly identityGenerator: IIdentityGenerator = new DefaultIdentityGenerator();
 
     constructor(torrents: InfoDictionary[], mediatorAddress: string, mediatorPort: number, identityGenerator:any, iceCandidates?: ICECandidate[], enableCaching?: boolean) {
         this.peerId = identityGenerator();
@@ -76,11 +81,13 @@ export class FileIncluder {
     }
 
     private fetchFileCacheFirst(fileName: string, callback: (file: File) => void) {
-        let full_hash = this.torrents.find(dict => dict.file_name === fileName)?.full_hash;
-        console.log(full_hash);
-        if(!full_hash) { console.error("could not find", fileName); return;};
-        this.readCache(full_hash, (file) => {
-            if(file) { callback(file) } else {
+        let dict = this.torrents.find(dict => dict.file_name === fileName);
+        if(!dict) { console.error("could not find", fileName); return;};
+        this.readCache(dict!.full_hash, (file) => {
+            if(file) { 
+                callback(file);
+                this.seedFile(file, (id) => { console.log("seeding cached", id)});
+            } else {
                 this.fetchFile(fileName, callback);
             }
         });
@@ -119,4 +126,59 @@ export class FileIncluder {
     private writeCache(full_hash: string, file: File) : void{
         localStorage.setItem(full_hash, file);
     }
+
+
+    public seedFile(file: File, dictionaryCallback: (dictionaryString: Object) => void) {
+
+        this.assembleInfoDictionary(file).then(fp => {
+            console.log("Seeding file: ", fp.infoDictionary);
+            let torrentData = new TorrentData(fp.infoDictionary, () => {}, () => {}, fp.data);
+            let sm = new SwarmManager(fp.infoDictionary, this.mediationClient, () => {}, torrentData);
+            this.mediationClient.announce(fp.infoDictionary.full_hash);
+            dictionaryCallback(fp.infoDictionary);
+        });
+    }
+
+
+
+    public generateArrayBufferArray(infoDictionary: InfoDictionary, file: File) : Promise<ArrayBuffer[]>{
+        if(infoDictionary.total_length !== file.size) {
+            console.error("file size must match specified size of meta-data");
+        }
+        let aba : ArrayBuffer[] = [];
+        let promise = file.arrayBuffer().then((ab) => {
+            for(let i = 0; i < infoDictionary.pieces_amount; i++) {
+
+                let begin = i * infoDictionary.pieces_length;
+                let end = i === infoDictionary.pieces_amount - 1 ? infoDictionary.total_length : begin + infoDictionary.pieces_length;
+                aba.push(ab.slice(begin, end));
+            }
+            return aba;
+        });
+        return promise;
+    }
+
+
+    readonly pieces_length = 15_000; //MAX is around 200_000
+    public assembleInfoDictionary(file: File) : Promise<FilePackage> {
+        let pieces_amount = file.size % this.pieces_length == 0 ? file.size / this.pieces_length : Math.floor(file.size / this.pieces_length) + 1;
+        let info_dictionary = new InfoDictionary("", file.name, this.pieces_length, pieces_amount, file.size);
+        let aba = this.generateArrayBufferArray(info_dictionary, file);
+        return aba.then(buffer => {
+            buffer.forEach(ab => {
+                info_dictionary.piece_hashes.push(generateFullHash([ab])); 
+            });
+            info_dictionary.full_hash = generateFullHash(buffer);
+            let fp = new FilePackage();
+            fp.infoDictionary = info_dictionary;
+            fp.data = buffer;
+            return fp;
+        });
+    
+    }
 }
+
+    export class FilePackage {
+        infoDictionary: InfoDictionary;
+        data: ArrayBuffer[];
+    }
