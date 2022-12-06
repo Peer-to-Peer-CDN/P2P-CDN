@@ -1,9 +1,10 @@
 const sinon  = require('sinon');
 import "mocha";
-import {assert, expect} from "chai";
+import {assert} from "chai";
 import {ConnectionType} from "../../common/MediationProtocol";
 import {TestInfrastructure} from "./testInfrastructure/TestInfrastructure";
 
+// Due to network transmissions (mediation protocol), all tests must be performed together in the designated order.
 describe("MediatorBasic_IntegrationTest", function () {
     let testInfrastructure: TestInfrastructure;
 
@@ -35,7 +36,7 @@ describe("MediatorBasic_IntegrationTest", function () {
     it("peers_emptyResult", function () {
         const expectedResult = 0;
         const actualResult = testInfrastructure.fullHashWithPeerList.size;
-        assert.equal(expectedResult, actualResult);
+        assert.equal(actualResult, expectedResult);
     });
 
     it("peers_consoleWarn", function (done) {
@@ -70,8 +71,8 @@ describe("MediatorBasic_IntegrationTest", function () {
         const expectedResult = testInfrastructure.peerId2;
         const actualResult = testInfrastructure.fullHashWithPeerList.get(testInfrastructure.testHash)?.[0];
 
-        assert.equal(expectedSize, actualSize);
-        assert.equal(expectedResult, actualResult);
+        assert.equal(actualSize, expectedSize);
+        assert.equal(actualResult, expectedResult);
     });
 
     it("signal_noError", function (done) {
@@ -91,6 +92,28 @@ describe("MediatorBasic_IntegrationTest", function () {
 
         assert.equal(actualSignalPeer1, expectedSignalPeer1);
         assert.equal(actualSignalPeer2, expectedSignalPeer2);
+    });
+
+    it("finish_noError", function (done) {
+        assert.doesNotThrow(() => {
+            testInfrastructure.fullHashWithPeerList = new Map();
+            testInfrastructure.peer2.finish(testInfrastructure.testHash);
+            setTimeout(() => { done(); }, 500); // Timeout to allow 'finish' to be processed.
+        });
+    });
+
+    it("getPeersAfterFinish_noError", function (done) {
+        assert.doesNotThrow(() => {
+            console.log("before last get");
+            testInfrastructure.peer1.get_peers(testInfrastructure.testHash);
+            setTimeout(() => { done(); }, 50); // Timeout to allow 'get_peers' to be processed.
+        });
+    });
+
+    it("peersAfterFinish_emptyResult", function () {
+        const expectedResult = 0;
+        const actualResult = testInfrastructure.fullHashWithPeerList.size;
+        assert.equal(actualResult, expectedResult);
     });
 });
 
