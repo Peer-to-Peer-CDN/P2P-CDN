@@ -130,7 +130,7 @@ export class FileIncluder {
 
     public seedFile(file: File, dictionaryCallback: (dictionaryString: Object) => void) {
 
-        this.assembleInfoDictionary(file).then(fp => {
+        FileIncluder.assembleInfoDictionary(file).then(fp => {
             console.log("Seeding file: ", fp.infoDictionary);
             let torrentData = new TorrentData(fp.infoDictionary, () => {}, () => {}, fp.data);
             let sm = new SwarmManager(fp.infoDictionary, this.mediationClient, () => {}, torrentData);
@@ -141,7 +141,7 @@ export class FileIncluder {
 
 
 
-    public generateArrayBufferArray(infoDictionary: InfoDictionary, file: File) : Promise<ArrayBuffer[]>{
+    public static generateArrayBufferArray(infoDictionary: InfoDictionary, file: File) : Promise<ArrayBuffer[]>{
         if(infoDictionary.total_length !== file.size) {
             console.error("file size must match specified size of meta-data");
         }
@@ -159,8 +159,8 @@ export class FileIncluder {
     }
 
 
-    readonly pieces_length = 15_000; //MAX is around 200_000
-    public assembleInfoDictionary(file: File) : Promise<FilePackage> {
+    static readonly pieces_length = 15; //MAX is around 200_000
+    public static assembleInfoDictionary(file: File) : Promise<FilePackage> {
         let pieces_amount = file.size % this.pieces_length == 0 ? file.size / this.pieces_length : Math.floor(file.size / this.pieces_length) + 1;
         let info_dictionary = new InfoDictionary("", file.name, this.pieces_length, pieces_amount, file.size);
         let aba = this.generateArrayBufferArray(info_dictionary, file);

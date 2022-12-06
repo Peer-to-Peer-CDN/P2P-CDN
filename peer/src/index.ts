@@ -45,7 +45,7 @@ export function includeImages(fileNames: string[], cssStrings: string[]) {
 
 export function seedFile(file: File, mediatorAddress:string, mediatorPort: number, dictionaryCallback: (dictionaryString: Object) => void) {
 
-    assembleInfoDictionary(file).then(fp => {
+    FileIncluder.assembleInfoDictionary(file).then(fp => {
         console.log("Seeding file: ", fp.infoDictionary);
         let torrentData = new TorrentData(fp.infoDictionary, () => {}, () => {}, fp.data);
         let mc = new MediationClient(identityGenerator.generateIdentity(), () => io(`ws://${mediatorAddress}:${mediatorPort}`));
@@ -53,46 +53,6 @@ export function seedFile(file: File, mediatorAddress:string, mediatorPort: numbe
         mc.announce(fp.infoDictionary.full_hash);
         dictionaryCallback(fp.infoDictionary);
     });
-}
-
-export function generateArrayBufferArray(infoDictionary: InfoDictionary, file: File) : Promise<ArrayBuffer[]>{
-    if(infoDictionary.total_length !== file.size) {
-        console.error("file size must match specified size of meta-data");
-    }
-    let aba : ArrayBuffer[] = [];
-    let promise = file.arrayBuffer().then((ab) => {
-        for(let i = 0; i < infoDictionary.pieces_amount; i++) {
-
-            let begin = i * infoDictionary.pieces_length;
-            let end = i === infoDictionary.pieces_amount - 1 ? infoDictionary.total_length : begin + infoDictionary.pieces_length;
-            aba.push(ab.slice(begin, end));
-        }
-        return aba;
-    });
-    return promise;
-}
-
-class FilePackage {
-    infoDictionary: InfoDictionary;
-    data: ArrayBuffer[];
-}
-
-const pieces_length = 15_000; //MAX is around 200_000
-function assembleInfoDictionary(file: File) : Promise<FilePackage> {
-    let pieces_amount = file.size % pieces_length == 0 ? file.size / pieces_length : Math.floor(file.size / pieces_length) + 1;
-    let info_dictionary = new InfoDictionary("", file.name, pieces_length, pieces_amount, file.size);
-    let aba = generateArrayBufferArray(info_dictionary, file);
-    return aba.then(buffer => {
-        buffer.forEach(ab => {
-            info_dictionary.piece_hashes.push(generateFullHash([ab])); 
-        });
-        info_dictionary.full_hash = generateFullHash(buffer);
-        let fp = new FilePackage();
-        fp.infoDictionary = info_dictionary;
-        fp.data = buffer;
-        return fp;
-    });
-    
 }
 
 function compareLengthAndThrowIfUnequal(x: any, y:any, errorMsg: string) {
