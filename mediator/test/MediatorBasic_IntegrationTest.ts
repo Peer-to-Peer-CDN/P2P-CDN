@@ -98,13 +98,12 @@ describe("MediatorBasic_IntegrationTest", function () {
         assert.doesNotThrow(() => {
             testInfrastructure.fullHashWithPeerList = new Map();
             testInfrastructure.peer2.finish(testInfrastructure.testHash);
-            setTimeout(() => { done(); }, 500); // Timeout to allow 'finish' to be processed.
+            setTimeout(() => { done(); }, 50); // Timeout to allow 'finish' to be processed.
         });
     });
 
     it("getPeersAfterFinish_noError", function (done) {
         assert.doesNotThrow(() => {
-            console.log("before last get");
             testInfrastructure.peer1.get_peers(testInfrastructure.testHash);
             setTimeout(() => { done(); }, 50); // Timeout to allow 'get_peers' to be processed.
         });
