@@ -24,7 +24,7 @@
             document.querySelector("#downloadButton").onclick = function() {
                 let id = JSON.parse(document.querySelector("#infoDictInput").value);
                 let filename = id.file_name; 
-                cdn.initialize([id], serverUrl, serverPort);
+                cdn.initialize([id], serverUrl, serverPort, true);
                 cdn.includeDownloads(
                     [filename],
                     ["#saveFileButton"]

@@ -4,21 +4,26 @@ import { CompleteEvent } from "../communication_layer/swarm/ITorrentData";
 import { SwarmManager } from "../communication_layer/swarm/SwarmManager";
 import { TorrentManager } from "../communication_layer/TorrentManager";
 import { io } from "socket.io-client";
+import localStorage from "localforage";
 
 export class FileIncluder {
     torrentManager: TorrentManager;
     torrents: InfoDictionary[];
     mediationClient : MediationClient;
     peerId: string;
+    enableCaching: boolean = false;
 
-    constructor(torrents: InfoDictionary[], mediatorAddress: string, mediatorPort: number, identityGenerator:any, iceCandidates?: ICECandidate[]) {
+    constructor(torrents: InfoDictionary[], mediatorAddress: string, mediatorPort: number, identityGenerator:any, iceCandidates?: ICECandidate[], enableCaching?: boolean) {
         this.peerId = identityGenerator();
         this.torrentManager = new TorrentManager();
         this.torrents = torrents;
         this.mediationClient = new MediationClient(this.peerId, () => io(`ws://${mediatorAddress}:${mediatorPort}`), iceCandidates); 
+        if(enableCaching) {this.enableCaching = enableCaching;}
     }
 
     includeDownload(cssString: string, fileName:string) {
+        let startTime = performance.now();
+
         const element = this.loadElementOrError(cssString);
 
         const parent = element.parentElement;
@@ -33,23 +38,51 @@ export class FileIncluder {
         link.style.textDecoration = "inherit";
         link.style.display = "inherit";
 
-        this.fetchFile(fileName, (file) => {
+        let cb = (file: File) => {
             link.href = URL.createObjectURL(file);
             link.download = file.name;
 
             parent.appendChild(link);
             link.appendChild(element);
-        });
+
+            console.log("performance", performance.now() - startTime);
+        };
+
+        if(this.enableCaching) {
+            this.fetchFileCacheFirst(fileName, cb);
+        } else {
+            this.fetchFile(fileName, cb);
+        }
+        
     }
 
     includeImage(cssString: string, fileName: string) {
+        let startTime = performance.now();
         const element = this.loadElementOrError(cssString) as HTMLImageElement;
-        this.fetchFile(fileName, (file) => {
+        let cb = (file: File) => {
             const reader = new FileReader();
             reader.onload = (link) => {
                 element.src = link.target?.result as string;
             };
             reader.readAsDataURL(file);
+            console.log("performance", performance.now() - startTime);
+        };
+
+        if(this.enableCaching) {
+            this.fetchFileCacheFirst(fileName, cb);
+        } else {
+            this.fetchFile(fileName, cb);
+        }
+    }
+
+    private fetchFileCacheFirst(fileName: string, callback: (file: File) => void) {
+        let full_hash = this.torrents.find(dict => dict.file_name === fileName)?.full_hash;
+        console.log(full_hash);
+        if(!full_hash) { console.error("could not find", fileName); return;};
+        this.readCache(full_hash, (file) => {
+            if(file) { callback(file) } else {
+                this.fetchFile(fileName, callback);
+            }
         });
     }
 
@@ -59,9 +92,10 @@ export class FileIncluder {
             console.error("Configuration does not contain a file called", fileName);
             return;
         }
-        let startTime = performance.now();
         this.torrentManager.addTorrent(dict, (complete: CompleteEvent) => new SwarmManager(dict!, this.mediationClient, complete), (file) => {
-            callback(file); console.log("performance: ", performance.now() - startTime)});
+            callback(file); 
+            this.writeCache(dict!.full_hash, file);
+        });
     }
 
     private loadElementOrError(cssString: string) : Element {
@@ -72,5 +106,17 @@ export class FileIncluder {
         }
 
         return element;
+    }
+
+    private readCache(full_hash: string, cb:  (val:File) => void) {
+        localStorage.getItem(full_hash, (err, val) => {
+            if(!err) {
+                cb(val as File);
+            }
+        });
+    }
+
+    private writeCache(full_hash: string, file: File) : void{
+        localStorage.setItem(full_hash, file);
     }
 }
