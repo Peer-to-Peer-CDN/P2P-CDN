@@ -22,7 +22,7 @@ export class PeerConnector implements IConnectorBase {
     public startListener() {
         this.protocol.on(ConnectionKeyWords.GET_PEERS, (full_hash: string) => {
             this.knownHashesSet.add(full_hash);
-            let localPeers = this.dataHolder.peerIdByFullHash.get(full_hash);
+            let localPeers = this.dataHolder.peerIdByFullHash.get(full_hash)?.filter(p => p !== this.peerId);
             if(localPeers) {
                 this.protocol.peers(full_hash, localPeers!);
             }

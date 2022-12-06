@@ -1,6 +1,4 @@
 import { io } from "socket.io-client";
-import { IIdentityGenerator } from "../../common/IIdentityGenerator";
-import { DefaultIdentityGenerator } from "../../common/DefaultIdentityGenerator";
 import { ConnectionKeyWords, ConnectionType, MediationProtocol } from "../../common/MediationProtocol";
 import { DHTNode } from "./DHTNode";
 import { PeerConnector } from "./PeerConnector";
@@ -59,6 +57,11 @@ export class MediationRouter {
     }
 
     private routeSignalToPeer(full_hash: string, receiverId: string, signalData: string, peerId: string) {
+        if (peerId == receiverId) {
+            console.warn("Routing signal to initiator peer itself is not possible. Receiver-ID: ", receiverId);
+            return;
+        }
+
         let receiverConnector = this.connectionByReceiverId.get(receiverId);
         let receiverIdOrConcat;
         if(receiverConnector instanceof PeerConnector) {
@@ -130,6 +133,16 @@ export class MediationRouter {
         let connection = this.connectionByReceiverId.get(peerId) as PeerConnector;
         if(connection) {
             this.connectionByReceiverId.delete(peerId);
+
+            this.peerIdByFullHash.forEach((value, key) => {
+                const remainingPeers = this.peerIdByFullHash.get(key)?.filter(e => e != peerId);
+                if (remainingPeers && remainingPeers.length > 0) {
+                    this.peerIdByFullHash.set(key, remainingPeers);
+                } else {
+                    this.peerIdByFullHash.delete(key);
+                }
+            });
+
             connection.knownHashesSet?.forEach(value => {
                 this.peerIdByFullHash.set(value, this.peerIdByFullHash.get(value)?.filter(e => e!== peerId) || []);
             });
