@@ -12,6 +12,7 @@
 
             let fileInput = document.querySelector("#uploadFileInput");
 
+            //cdn.overrideICECandidates([{urls: 'stun:alderaan.ch:3478'}, {urls:'turn:alderaan.ch:3478', username:'test', credential:'test'}]);
             fileInput.addEventListener("change", () => {
                 let file = fileInput.files[0];
                 cdn.seedFile(file, serverUrl, serverPort, (infoDictionaryString) => {
@@ -24,7 +25,7 @@
             document.querySelector("#downloadButton").onclick = function() {
                 let id = JSON.parse(document.querySelector("#infoDictInput").value);
                 let filename = id.file_name; 
-                cdn.initialize([id], serverUrl, serverPort, true);
+                cdn.initialize([id], serverUrl, serverPort, false);
                 cdn.includeDownloads(
                     [filename],
                     ["#saveFileButton"]

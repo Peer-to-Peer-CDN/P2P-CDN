@@ -14,10 +14,10 @@ let fileIncluder: FileIncluder;
 let iceCandidates: ICECandidate[];
 
 export function initialize(infoDictionaries: InfoDictionary[], mediatorAddress: string, mediatorPort: number, enableCaching: boolean) {
-    fileIncluder = new FileIncluder(infoDictionaries, mediatorAddress, mediatorPort, () => identityGenerator.generateIdentity(), iceCandidates, enableCaching = enableCaching);
+    fileIncluder = new FileIncluder(infoDictionaries, mediatorAddress, mediatorPort, () => identityGenerator.generateIdentity(), iceCandidates, enableCaching);
 }
 
-export function overrrideICECandidates(candidates: ICECandidate[]) {
+export function overrideICECandidates(candidates: ICECandidate[]) {
     iceCandidates = candidates;
 }
 
@@ -48,7 +48,7 @@ export function seedFile(file: File, mediatorAddress:string, mediatorPort: numbe
     FileIncluder.assembleInfoDictionary(file).then(fp => {
         console.log("Seeding file: ", fp.infoDictionary);
         let torrentData = new TorrentData(fp.infoDictionary, () => {}, () => {}, fp.data);
-        let mc = new MediationClient(identityGenerator.generateIdentity(), () => io(`ws://${mediatorAddress}:${mediatorPort}`));
+        let mc = new MediationClient(identityGenerator.generateIdentity(), () => io(`ws://${mediatorAddress}:${mediatorPort}`), iceCandidates);
         let sm = new SwarmManager(fp.infoDictionary, mc, () => {}, torrentData);
         mc.announce(fp.infoDictionary.full_hash);
         dictionaryCallback(fp.infoDictionary);
