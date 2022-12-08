@@ -12,7 +12,6 @@
 
             let fileInput = document.querySelector("#uploadFileInput");
 
-            //cdn.overrideICECandidates([{urls: 'stun:alderaan.ch:3478'}, {urls:'turn:alderaan.ch:3478', username:'test', credential:'test'}]);
             fileInput.addEventListener("change", () => {
                 let file = fileInput.files[0];
                 cdn.seedFile(file, serverUrl, serverPort, (infoDictionaryString) => {

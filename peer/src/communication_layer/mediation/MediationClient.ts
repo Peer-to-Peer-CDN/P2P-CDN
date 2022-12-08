@@ -13,12 +13,12 @@ export class MediationClient implements IMediationClient{
     private peerId;
     private RTCs : Map<string, SimplePeer.Instance> = new Map(); //map peerId to SimplePeers instances
 
-    private iceServers: ICECandidate[] = [{urls: 'turn:openrelay.metered.ca:80?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject'}, {urls: 'stun:openrelay.metered.ca:80?transport=tcp'},     {
+    private iceServers: ICECandidate[] = [{urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject'}, {urls: 'stun:openrelay.metered.ca:80'},     {
         urls: "turn:openrelay.metered.ca:443",
         username: "openrelayproject",
         credential: "openrelayproject",
       },    {
-        urls: "turn:openrelay.metered.ca:443?transport=tcp",
+        urls: "turn:openrelay.metered.ca:443",
         username: "openrelayproject",
         credential: "openrelayproject",
       }];
@@ -48,35 +48,30 @@ export class MediationClient implements IMediationClient{
                 return;
             }
             this.peerIdBlackList.add(peer);
-            let rtc = new SimplePeer({initiator: true, config: { iceServers: this.iceServers}});
+            let rtc = new SimplePeer({initiator: true,trickle: false, config: { iceServers: this.iceServers}});
             rtc.on('error', err => console.warn(err, this.iceServers));
             if(!this.RTCs.get(peer)) {
                 this.RTCs.set(peer, rtc);
             }
             rtc.on(ConnectionKeyWords.CONNECT, () => {
-                console.log("CONNECTED, as initiator")
                 this.addPeer(full_hash, rtc, true);
             });
             rtc.on(ConnectionKeyWords.SIGNAL, (data:any) => {
-                console.log("signaling", data);
                 this.protocol.signal(full_hash, peer, JSON.stringify(data));
             });
         });
     }
 
     private onSignal(full_hash: string, senderPeer:string, signalData:string) {
-        console.log("received signal", signalData);
         let rtc = this.RTCs.get(senderPeer);
         if(!rtc) { //new peer trying to connect to us!
             rtc = new SimplePeer({initiator: false, trickle: false, config: { iceServers: this.iceServers}});
             rtc.signal(JSON.parse(signalData));
             rtc.on('error', err => console.warn(err, this.iceServers));
             rtc.on(ConnectionKeyWords.SIGNAL, data => {
-                console.log("signaling", data);
                 this.protocol.signal(full_hash, senderPeer, JSON.stringify(data));
             });
             rtc.on(ConnectionKeyWords.CONNECT, () => {
-                console.log("CONNECTED, as initiatee");
                 //@ts-ignore //rtc is not assignable to type IP2PTransport for some reason, should still work.
                 this.addPeer(full_hash, rtc, false);
             });
