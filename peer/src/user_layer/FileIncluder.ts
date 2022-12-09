@@ -159,7 +159,7 @@ export class FileIncluder {
     }
 
 
-    static readonly pieces_length = 100_000; //MAX is around 200_000
+    static readonly pieces_length = 200_000; 
     public static assembleInfoDictionary(file: File) : Promise<FilePackage> {
         let pieces_amount = file.size % this.pieces_length == 0 ? file.size / this.pieces_length : Math.floor(file.size / this.pieces_length) + 1;
         let info_dictionary = new InfoDictionary("", file.name, this.pieces_length, pieces_amount, file.size);
