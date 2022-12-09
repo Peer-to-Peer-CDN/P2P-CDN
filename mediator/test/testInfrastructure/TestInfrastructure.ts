@@ -5,7 +5,8 @@ import {MediationServer} from "../../src/MediationServer";
 import {TestIdentityGenerator} from "./TestIdentityGenerator";
 
 export class TestInfrastructure {
-    private readonly mediator1: MediationServer;
+    private mediator1: MediationServer;
+    private mediator2: MediationServer;
 
     public readonly testHash = "test-hash";
     public peer1: MediationProtocol;
@@ -18,17 +19,27 @@ export class TestInfrastructure {
     public receivedSignalOnPeer1: string;
     public receivedSignalOnPeer2: string;
 
-    constructor() {
+    constructor(runTwoMediators: boolean) {
         const identityGenerator = new TestIdentityGenerator();
-        this.mediator1 = new MediationServer(new Server(8888, {cors: {origin: '*'}}), false, 5555, 8888);
-        this.mediator1.run();
+
+        if (runTwoMediators) {
+            setTimeout(() => {
+                this.mediator1 = new MediationServer(new Server(8888, {cors: {origin: '*'}}), false, 5555, 8888);
+                this.mediator1.run();
+                this.mediator2 = new MediationServer(new Server(8889, {cors: {origin: '*'}}), ["127.0.0.1:5555"], 5556, 8889);
+                this.mediator2.run();
+            }, 25);
+        } else {
+            this.mediator1 = new MediationServer(new Server(8887, {cors: {origin: '*'}}), false, 5554, 8887);
+            this.mediator1.run();
+        }
 
         setTimeout(() => { // Timeout to allow mediator to start.
-            const socket1 = io("ws://localhost:8888");
+            const socket1 = runTwoMediators ? io("ws://localhost:8888") : io("ws://localhost:8887");
             this.peer1 = new MediationProtocol(socket1);
             this.peerId1 = identityGenerator.generateIdentity(1);
 
-            const socket2 = io("ws://localhost:8888");
+            const socket2 = runTwoMediators ? io("ws://localhost:8889") : io("ws://localhost:8887");
             this.peer2 = new MediationProtocol(socket2);
             this.peerId2 = identityGenerator.generateIdentity(2);
 
