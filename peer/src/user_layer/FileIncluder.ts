@@ -26,24 +26,27 @@ export class FileIncluder {
         if(enableCaching) {this.enableCaching = enableCaching;}
     }
 
-    includeDownload(cssString: string, fileName:string) {
+    includeDownload(cssString: string, fileName:string, callback: (() => void) | undefined) {
         let startTime = performance.now();
 
-        const element = this.loadElementOrError(cssString);
+        
 
-        const parent = element.parentElement;
-        if(!parent) {
-            console.error(`Element identified by css-string must have a parent element`);
-            return;
-        }
-
-        parent?.removeChild(element);
-        const link = document.createElement('a');
-        link.style.color = "inherit";
-        link.style.textDecoration = "inherit";
-        link.style.display = "inherit";
-
+        
         let cb = (file: File) => {
+            const element = this.loadElementOrError(cssString);
+
+            const parent = element.parentElement;
+            if(!parent) {
+                console.error(`Element identified by css-string must have a parent element`);
+                return;
+            }
+
+            parent!.removeChild(element);
+            const link = document.createElement('a');
+
+            link.style.color = "inherit";
+            link.style.textDecoration = "inherit";
+            link.style.display = "inherit";
             link.href = URL.createObjectURL(file);
             link.download = file.name;
 
@@ -51,6 +54,7 @@ export class FileIncluder {
             link.appendChild(element);
 
             console.log("performance", performance.now() - startTime);
+            if(callback) { callback(); }
         };
 
         if(this.enableCaching) {
@@ -61,7 +65,7 @@ export class FileIncluder {
         
     }
 
-    includeImage(cssString: string, fileName: string) {
+    includeImage(cssString: string, fileName: string, callback: (() => void) | undefined) {
         let startTime = performance.now();
         const element = this.loadElementOrError(cssString) as HTMLImageElement;
         let cb = (file: File) => {
@@ -71,6 +75,7 @@ export class FileIncluder {
             };
             reader.readAsDataURL(file);
             console.log("performance", performance.now() - startTime);
+            if(callback) { callback(); }
         };
 
         if(this.enableCaching) {

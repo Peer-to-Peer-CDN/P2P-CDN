@@ -27,11 +27,17 @@ function checkInitializedOrError() {
     }
 }
 
+let downloadedCallbacks = new Map<string/*filename*/, () => void /*callback*/>();
+
+export function onFileDownloaded(filename: string, callback: () => void) {
+    downloadedCallbacks.set(filename, callback);
+}
+
 export function includeDownloads(fileNames: string[], cssStrings: string[]) { 
     checkInitializedOrError();
     compareLengthAndThrowIfUnequal(fileNames, cssStrings, "fileNames length must match cssstring length");
     for(let i = 0; i < fileNames.length; i++) {
-        fileIncluder.includeDownload(cssStrings[i], fileNames[i]);
+        fileIncluder.includeDownload(cssStrings[i], fileNames[i], downloadedCallbacks.get(fileNames[i]));
     }
 }
 
@@ -39,7 +45,7 @@ export function includeImages(fileNames: string[], cssStrings: string[]) {
     checkInitializedOrError();
     compareLengthAndThrowIfUnequal(fileNames, cssStrings, "fileNames length must match cssstring length");
     for(let i = 0; i < fileNames.length; i++) {
-        fileIncluder.includeImage(cssStrings[i], fileNames[i]);
+        fileIncluder.includeImage(cssStrings[i], fileNames[i], downloadedCallbacks.get(fileNames[i]));
     }
 }
 
