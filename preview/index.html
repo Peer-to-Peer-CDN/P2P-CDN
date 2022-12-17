@@ -9,6 +9,7 @@
         window.addEventListener("load", () => {
             const serverUrl = "localhost";
             const serverPort = 8888;
+            const enableCaching = false;
 
             let fileInput = document.querySelector("#uploadFileInput");
 
@@ -20,11 +21,10 @@
                 });
             },false);
 
-
             document.querySelector("#downloadButton").onclick = function() {
                 let id = JSON.parse(document.querySelector("#infoDictInput").value);
                 let filename = id.file_name; 
-                cdn.initialize([id], serverUrl, serverPort, false);
+                cdn.initialize([id], serverUrl, serverPort, enableCaching);
                 cdn.onFileDownloaded(id.file_name, () => {
                     document.querySelector('#saveFileButton').disabled = false;
                 });
@@ -33,10 +33,6 @@
                     ["#saveFileButton"]
                 );
             };
-            /*cdn.includeImages(
-                [""],
-                [".test2"],
-            );*/
         });
     </script>
     <style>
