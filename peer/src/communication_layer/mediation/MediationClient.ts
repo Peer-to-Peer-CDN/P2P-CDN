@@ -5,6 +5,7 @@ import { PeerWire } from "../peer/PeerWire";
 import { ConnectionKeyWords, ConnectionType, MediationProtocol} from "../../../../common/MediationProtocol";
 var io = require('socket.io-client');
 import SimplePeer from "simple-peer";
+import { ICEConfig } from "./ICEConfig";
 
 export type ICECandidate = {urls: string, username?: string, credential?:string};
 export class MediationClient implements IMediationClient{
@@ -13,21 +14,15 @@ export class MediationClient implements IMediationClient{
     private peerId;
     private RTCs : Map<string, SimplePeer.Instance> = new Map(); //map peerId to SimplePeers instances
 
-    private iceServers: ICECandidate[] = [{urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject'}, {urls: 'stun:openrelay.metered.ca:80'},     {
-        urls: "turn:openrelay.metered.ca:443",
-        username: "openrelayproject",
-        credential: "openrelayproject",
-      },    {
-        urls: "turn:openrelay.metered.ca:443",
-        username: "openrelayproject",
-        credential: "openrelayproject",
-      }];
+    private iceServers: ICECandidate[]; 
 
     private peerIdBlackList = new Set<string>();
 
     constructor(peerId: string, socketFactory: any, iceCandidates?: ICECandidate[]) { //socketFactory = () => any;
         if(iceCandidates) {
             this.iceServers = iceCandidates;
+        } else {
+            this.iceServers = ICEConfig;
         }
         const socket = socketFactory()
         this.protocol = new MediationProtocol(socket);
