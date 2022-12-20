@@ -61,10 +61,9 @@ cd ..
 3. Run mediator
     1. Option 1: Create a run config in your IDE
     2. Option 2: `node .\mediator\out\mediator\src\index.js <mediator-port> <dht-port> <optional-bootstrap-address>`
-4. Open `seeder_preview.html` in your browser
-5. Open `leecher_preview.html` in your browser
+4. Open `/preview/index.html` in your browser
 
 ### Execute Remotely
 1. Run mediator on an external web server
-2. Update serverUrl and serverPort in your `.\preview\index.html`
-4. Open `.\preview\index.html` in your browser
+2. Update serverUrl and serverPort in your `/preview/index.html`
+4. Open `/preview/index.html` in your browser
