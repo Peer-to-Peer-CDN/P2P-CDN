@@ -11,7 +11,7 @@ Our concept, backed by the prototype in this repository, proves that it is possi
 Latency can still be improved by prioritizing peers for latency, to reach smaller round-trip times and therefore faster connection-establishment. Due to this project being limited in time, this mechanism remains to be solved by future work.
 
 ## Documentation
-This work was done as part of a Student Research Project at [OST - Eastern Switzerland University of Applied Sciences](https://www.ost.ch/en/). The link to the report will be inserted here as soon as it has been published.
+This work was done as part of a Student Research Project at [OST - Eastern Switzerland University of Applied Sciences](https://www.ost.ch/en/). The published report can be found at [eprints.ost.ch](https://eprints.ost.ch/id/eprint/1097/).
 
 ## Concept
 ### Overview
